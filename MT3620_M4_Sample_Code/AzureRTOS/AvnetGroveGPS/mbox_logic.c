@@ -106,11 +106,12 @@ typedef struct
 {
 	INTER_CORE_CMD cmd;
 	uint32_t sensorSampleRate;
-	uint8_t rawData8bit;
-    uint16_t rawData16bit;
-    uint32_t rawData32bit;
-	float rawDataFloat;
-} IC_COMMAND_BLOCK;
+	double lat;
+    double lon;
+    int fix_qual;
+	int numsats;
+    float alt;
+} IC_COMMAND_BLOCK_GROVE_GPS;
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {
@@ -119,7 +120,7 @@ enum triggers {
 };
 
 // Define a variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK ic_control_block;
+IC_COMMAND_BLOCK_GROVE_GPS ic_control_block;
 
 /* Define Semaphores */
 
@@ -247,7 +248,6 @@ void tx_thread_uart_rx_entry(ULONG thread_input)
 
     char   messageID[7];
     char   sTimestamp[20];
-    double timestamp;
 
     char   sLat_decimal_deg[20];
     double lat_decimal_deg;  
@@ -264,7 +264,6 @@ void tx_thread_uart_rx_entry(ULONG thread_input)
     char   sFix_qual[20];
     char   sNsats[10];
     char   sHorizontal_dilution[20];
-//    double horizontal_dilution;
     char   sAlt_sl[20];
     char   sAge_null[20];
     char   sStation_id[20];
@@ -303,7 +302,6 @@ void tx_thread_uart_rx_entry(ULONG thread_input)
                 // Clear all the variables used to capture the NEMA GPS data
                 memset(messageID, 0, sizeof(messageID));
                 memset(sTimestamp, 0, sizeof(sTimestamp));
-                timestamp = 0.0;
 
                 memset(sLat_decimal_deg, 0, sizeof(sLat_decimal_deg));
                 lat_decimal_deg = 0.0;  
@@ -326,7 +324,6 @@ void tx_thread_uart_rx_entry(ULONG thread_input)
                 memset(sNsats, 0, sizeof(sNsats));
                 nsats = 0;
                 memset(sHorizontal_dilution, 0, sizeof(sHorizontal_dilution));
-//                horizontal_dilution = 0.0;
                 memset(sAlt_sl, 0, sizeof(sAlt_sl));
                 alt_sl = 0.0;
                 memset(alt_sl_units, 0, sizeof(alt_sl_units));
@@ -337,8 +334,6 @@ void tx_thread_uart_rx_entry(ULONG thread_input)
                 // Parse the data from the incomming string, this converts everything to strings.  Convert to numbers as appropriate below
                 sscanf(rxBuffer, "%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^',']",
                                                 messageID, sTimestamp, sLat_decimal_deg, lat_dir, sLon_decimal_deg, lon_dir, sFix_qual, sNsats, sHorizontal_dilution, sAlt_sl, alt_sl_units, sAge_null, sStation_id, chksum);
-
-                timestamp = atof(sTimestamp);
 
                 // Get the semaphore with suspension before updating the global GPS variables
                 tx_semaphore_get(&gpsDataSemaphore, TX_WAIT_FOREVER);   
@@ -365,13 +360,13 @@ void tx_thread_uart_rx_entry(ULONG thread_input)
                 // Convert data from strings to the appropriate types
                 fix_qual = atoi(sFix_qual);
                 nsats = atoi(sNsats);
-//              horizontal_dilution = atof(sHorizontal_dilution);
                 alt_sl = atof(sAlt_sl);
 
                 // Release the semaphore.
                 tx_semaphore_put(&gpsDataSemaphore);
 
-                printf("\n%2d satellites, quality %d, altitude %.2f %s, %lf, %lf\n", nsats, fix_qual, alt_sl, alt_sl_units, lat, lon);            }
+                printf("\n%2d satellites, quality %d, altitude %.2f %s, %lf, %lf\n", nsats, fix_qual, alt_sl, alt_sl_units, lat, lon);            
+            }
 
             // Reset the buffer index and clear the buffer to read the next message
             i = 0;
@@ -456,7 +451,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
             // Cast the incomming message so we can index into it with our structure.  Note that
             // the data befrore PAY_LOAD_START_OFFSET is required when we send a response, so keep it intact
-            IC_COMMAND_BLOCK *commandMsg = (IC_COMMAND_BLOCK*) &mbox_local_buf[PAY_LOAD_START_OFFSET];
+            IC_COMMAND_BLOCK_GROVE_GPS *commandMsg = (IC_COMMAND_BLOCK_GROVE_GPS*) &mbox_local_buf[PAY_LOAD_START_OFFSET];
 
             /* Process the command from the high level Application */
             switch (commandMsg->cmd)
@@ -483,29 +478,31 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                     // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK)+1);
+                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_GROVE_GPS)+1);
                     break;
 
                 // If the real time application sends this command, then the high level application is requesting
-                // raw data from the sensor(s).  In this case, he developer needs to understand 
-                // what the data is and what needs to be done with it at both the high level and real time applcations.
+                // raw data from the sensor(s).  Fill out the IC_COMMAND_BLOCK_GROVE_GPS struct with the current gps data  
                 case IC_READ_SENSOR:
 
-                    // This application does not support sending back raw data at this time
-                    // Use the example below to add this feature if desired/required
+                    // Get the semaphore with suspension before reading the global variables, in case they are being updated
+                    tx_semaphore_get(&gpsDataSemaphore, TX_WAIT_FOREVER);   
 
-                    /*
-                    // Simulate reading data from a sensor with random numbers
-                    commandMsg->rawData8bit = (int)(rand()%100);
-                    commandMsg->rawDataFloat = ((float)rand()/(float)(RAND_MAX)) * 100;
+                    // Fill in the struct with the raw data
+                    commandMsg->fix_qual = fix_qual;
+                    commandMsg->lat = lat;
+                    commandMsg->lon = lon;
+                    commandMsg->numsats = nsats;
+                    commandMsg->alt = alt_sl;
 
-                    printf("RealTime App sending sensor reading 8-bit: %d\n", commandMsg->rawData8bit);
-                    printf("RealTime App sending sensor reading float: %.2f\n", commandMsg->rawDataFloat);
+                    // Release the semaphore.
+                    tx_semaphore_put(&gpsDataSemaphore);
 
-                    // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
-                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK)+1);
-                    */
-                    
+                    printf("TX Raw Data: fix_qual: %d, numstats: %d, lat: %lf, lon: %lf, alt: %.2f\n",
+                            commandMsg->fix_qual, commandMsg->numsats, commandMsg->lat, commandMsg->lon, commandMsg->alt);
+
+                    // Write to A7, enqueue to mailbox, we're just echoing back the IC_READ_SENSOR command
+                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_GROVE_GPS)+1);
                     break;
 
                 case IC_HEARTBEAT:
