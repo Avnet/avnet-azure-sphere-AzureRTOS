@@ -94,11 +94,8 @@ typedef struct
 {
 	INTER_CORE_CMD cmd;
 	uint32_t sensorSampleRate;
-	uint8_t rawData8bit;
-    uint16_t rawData16bit;
-    uint32_t rawData32bit;
-	float rawDataFloat;
-} IC_COMMAND_BLOCK;
+    uint32_t lightSensorAdcData;
+} IC_COMMAND_BLOCK_ALS_PT19;
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {
@@ -107,7 +104,7 @@ enum triggers {
 };
 
 // Define a variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK ic_control_block;
+IC_COMMAND_BLOCK_ALS_PT19 ic_control_block;
 
 /* Define Semaphores */
 
@@ -283,7 +280,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
             // Cast the incomming message so we can index into it with our structure.  Note that
             // the data befrore PAY_LOAD_START_OFFSET is required when we send a response, so keep it intact
-            IC_COMMAND_BLOCK *commandMsg = (IC_COMMAND_BLOCK*) &mbox_local_buf[PAY_LOAD_START_OFFSET];
+            IC_COMMAND_BLOCK_ALS_PT19 *commandMsg = (IC_COMMAND_BLOCK_ALS_PT19*) &mbox_local_buf[PAY_LOAD_START_OFFSET];
 
             /* Process the command from the high level Application */
             switch (commandMsg->cmd)
@@ -309,7 +306,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                     // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK)+1);
+                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_ALS_PT19)+1);
                     break;
 
                 // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
@@ -317,12 +314,12 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 case IC_READ_SENSOR:
 
                     // Read the light sensor data and copy it into the response buffer
-                    commandMsg->rawData32bit = adcRead();
+                    commandMsg->lightSensorAdcData = adcRead();
 
-                    printf("RealTime App sending sensor reading 32-bit: %lu\n", commandMsg->rawData32bit);
+                    printf("RealTime App sending sensor reading 32-bit: %lu\n", commandMsg->lightSensorAdcData);
 
                     // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
-                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK)+1);
+                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_ALS_PT19)+1);
                     break;
 
                 case IC_HEARTBEAT:
