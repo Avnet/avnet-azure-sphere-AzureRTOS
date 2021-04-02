@@ -81,10 +81,9 @@ typedef struct
 	INTER_CORE_CMD cmd;
 	uint32_t sensorSampleRate;
 	uint8_t rawData8bit;
-    uint16_t rawData16bit;
-    uint32_t rawData32bit;
 	float rawDataFloat;
-} IC_COMMAND_BLOCK;
+} IC_COMMAND_BLOCK_GENERIC_RT_APP;
+
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {
@@ -93,7 +92,7 @@ enum triggers {
 };
 
 // Define a variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK ic_control_block;
+IC_COMMAND_BLOCK_GENERIC_RT_APP ic_control_block;
 
 /* Define Semaphores */
 
@@ -269,7 +268,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
             // Cast the incomming message so we can index into it with our structure.  Note that
             // the data befrore PAY_LOAD_START_OFFSET is required when we send a response, so keep it intact
-            IC_COMMAND_BLOCK *commandMsg = (IC_COMMAND_BLOCK*) &mbox_local_buf[PAY_LOAD_START_OFFSET];
+            IC_COMMAND_BLOCK_GENERIC_RT_APP *commandMsg = (IC_COMMAND_BLOCK_GENERIC_RT_APP*) &mbox_local_buf[PAY_LOAD_START_OFFSET];
 
             /* Process the command from the high level Application */
             switch (commandMsg->cmd)
@@ -296,7 +295,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                     // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK)+1);
+                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_GENERIC_RT_APP)+1);
                     break;
 
                 // If the real time application sends this command, then the high level application is requesting
@@ -312,7 +311,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     printf("RealTime App sending sensor reading float: %.2f\n", commandMsg->rawDataFloat);
 
                     // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
-                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK)+1);
+                    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_GENERIC_RT_APP)+1);
                     break;
 
                 case IC_HEARTBEAT:
@@ -477,7 +476,7 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
         // would . . .
         // 1. Read the attached sensors (or access data)
         // 2. Construct and send telemetry JSON ("newKey"; value, "newKey2": value2, . . . ) depending on the sensor/cloud implementation
-        responseLen = snprintf((char*)&mbox_local_buf[PAY_LOAD_START_OFFSET+1], 128, "{\"sampleKeyString\":\"%s\", \"sampleKeyInt\":%d, \"sampleKeyFloat\":%.3lf}", 
+        responseLen = snprintf((char*)&mbox_local_buf[PAY_LOAD_START_OFFSET+1], 128, "{\"sampleRtKeyString\":\"%s\", \"sampleRtKeyInt\":%d, \"sampleRtKeyFloat\":%.3lf}", 
                                                                                     "AvnetKnowsIoT", 
                                                                                     (int)(rand()%100),
                                                                                     ((float)rand()/(float)(RAND_MAX)) * 100);
