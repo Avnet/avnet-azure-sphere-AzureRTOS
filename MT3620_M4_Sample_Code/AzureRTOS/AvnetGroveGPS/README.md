@@ -21,21 +21,25 @@ This application binary can be side loaded onto your device with the following c
 * `azsphere device sideload deploy --image-package ./AvnetGroveGPS.imagepackage`
 
 # Configuring the Avnet Default High Level application to use this example
-To configure the high level application to use this binary ...
+To configure the AvnetDefaultProject high level application to use this binary ...
+* Include the raw data handler function definition in m4_support.h
 
-Include the interface definition in the m4_support.c 4mArray[] definition
+`void groveGPSRawDataHandler(void*);`
 
-       // The AvnetGroveGPS app captures data from a Grove GPS V1.2 UART device
-     {
-        .m4Name="AvnetGroveGPS",
-        .m4RtComponentID="592b46b7-5552-4c58-9163-9185f46b96aa",
-        .m4InitHandler=genericM4Init,
-        .m4Handler=genericM4Handler,
-        .m4CleanupHandler=genericM4Cleanup,
-  	    .m4TelemetryHandler=genericM4RequestTelemetry,
-        .m4InterfaceVersion=V0}
-     }
-   
+* Include the interface definition in the m4_support.c 4mArray[] definition
+
+      // The AvnetGroveGPS app captures data from a Grove GPS V1.2 UART device
+      {
+       .m4Name="AvnetGroveGPS",
+       .m4RtComponentID="592b46b7-5552-4c58-9163-9185f46b96aa",
+       .m4InitHandler=genericM4Init,
+       .m4Handler=genericM4Handler,
+       .m4rawDataHandler=groveGPSRawDataHandler,
+       .m4CleanupHandler=genericM4Cleanup,
+       .m4TelemetryHandler=genericM4RequestTelemetry,
+       .m4InterfaceVersion=V0
+      }
+     
 * Update the high level app_manifest.json file with the real time application's ComponentID
 
 `"AllowedApplicationConnections": [ "592b46b7-5552-4c58-9163-9185f46b96aa" ],`
@@ -48,8 +52,11 @@ Include the interface definition in the m4_support.c 4mArray[] definition
 
 `"partnerComponents": [ "592b46b7-5552-4c58-9163-9185f46b96aa" ]`
 
-* Add the functiion definition to m4_support.h
-* Include the raw data handler in your high level application in m4_support.c
+* Add the function definition to m4_support.h
+
+    void groveGPSRawDataHandler(void*);
+
+Include the raw data handler in your high level application in m4_support.c
 
     /// <summary>
     ///  groveGPSRawDataHandler()
@@ -69,14 +76,14 @@ Include the interface definition in the m4_support.c 4mArray[] definition
         // Define the expected data structure.  Note this struct came from the AvnetGroveGPS real time application code
         typedef struct
         {
-    	      INTER_CORE_CMD cmd;
-	          uint32_t sensorSampleRate;
-	          double lat;
-            double lon;
-            int fix_qual;
-	          int numsats;
-            float alt;
-        } IC_COMMAND_BLOCK_GROVE_GPS;
+           INTER_CORE_CMD cmd;
+           uint32_t sensorSampleRate;
+           double lat;
+           double lon;
+           int fix_qual;
+           int numsats;
+           float alt;
+	 } IC_COMMAND_BLOCK_GROVE_GPS;
 
         // Cast the message so we can index into the data to pull the GPS data out of it
         IC_COMMAND_BLOCK_GROVE_GPS *messageData = (IC_COMMAND_BLOCK_GROVE_GPS*) msg;
@@ -102,35 +109,34 @@ Include the interface definition in the m4_support.c 4mArray[] definition
 
             size_t twinBufferSize = sizeof(gpsDataJsonString)+48;
             char *pjsonBuffer = (char *)malloc(twinBufferSize);
-	          if (pjsonBuffer == NULL) {
-              Log_Debug("ERROR: not enough memory to report GPS location data.");
-    	      }
+            if (pjsonBuffer == NULL) {
+                Log_Debug("ERROR: not enough memory to report GPS location data.");
+    	    }
 
             // Build out the JSON and send it as a device twin update
-	          snprintf(pjsonBuffer, twinBufferSize, gpsDataJsonString, messageData->lat, messageData->lon, messageData->alt );
-	          Log_Debug("[MCU] Updating device twin: %s\n", pjsonBuffer);
+	    snprintf(pjsonBuffer, twinBufferSize, gpsDataJsonString, messageData->lat, messageData->lon, messageData->alt );
+	    Log_Debug("[MCU] Updating device twin: %s\n", pjsonBuffer);
             TwinReportState(pjsonBuffer);
-	          free(pjsonBuffer);
+	    free(pjsonBuffer);
         }
     #endif         
-  
     }
 
 ## Application Manifest
 Note that high level apps and real time apps may not declare the same resources in their app_manifest.json files.  This real time application uses the following Azure Sphere resources, and is built to connect to the AvnetDefaultProject/HighLevelExampleApp application with ComponentID: 06e116bd-e3af-4bfe-a0cb-f1530b8b91ab.
 
-{
-  "SchemaVersion": 1,
-  "Name": "AvnetGroveGPSV1",
-  "ComponentId": "592b46b7-5552-4c58-9163-9185f46b96aa",
-  "EntryPoint": "/bin/app",
-  "CmdArgs": [],
-  "Capabilities": {
-    "Uart": [ "ISU0" ],
-    "AllowedApplicationConnections": [ "06e116bd-e3af-4bfe-a0cb-f1530b8b91ab" ]
-  },
-  "ApplicationType": "RealTimeCapable"
-}
+    {
+        "SchemaVersion": 1,
+        "Name": "AvnetGroveGPSV1",
+        "ComponentId": "592b46b7-5552-4c58-9163-9185f46b96aa",
+        "EntryPoint": "/bin/app",
+        "CmdArgs": [],
+        "Capabilities": {
+            "Uart": [ "ISU0" ],
+            "AllowedApplicationConnections": [ "06e116bd-e3af-4bfe-a0cb-f1530b8b91ab" ]
+        },
+       "ApplicationType": "RealTimeCapable"
+    }
 
 ## Hardware resources claimed by this application
 Note that using/declaring the ADC controller in the app_manifest.json file will also lock the following MT3620 resources to the real time application.  See the [I/O Peripherals table](https://docs.microsoft.com/en-us/azure-sphere/hardware/mt3620-product-status#io-peripherals) for details on how the MT3620 maps hardware pins to blocks.
