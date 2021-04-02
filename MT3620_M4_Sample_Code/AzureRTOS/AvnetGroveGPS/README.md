@@ -22,7 +22,8 @@ This application binary can be side loaded onto your device with the following c
 
 # Configuring the Avnet Default High Level application to use this example
 To configure the AvnetDefaultProject high level application to use this binary ...
-* Include the raw data handler function definition in m4_support.h
+
+* Add the function definition to m4_support.h
 
 `void groveGPSRawDataHandler(void*);`
 
@@ -51,10 +52,6 @@ To configure the AvnetDefaultProject high level application to use this binary .
 * Update the high level .vscode\launch.json  file with the real time application's ComponentID
 
 `"partnerComponents": [ "592b46b7-5552-4c58-9163-9185f46b96aa" ]`
-
-* Add the function definition to m4_support.h
-
-    void groveGPSRawDataHandler(void*);
 
 Include the raw data handler in your high level application in m4_support.c
 
