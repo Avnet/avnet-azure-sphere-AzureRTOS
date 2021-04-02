@@ -55,16 +55,16 @@ Include the interface definition in the m4_support.c 4mArray[] definition
 
 * Include the raw data handler in your high level application in m4_support.c
 
-    /// <summary>
-    ///  referenceRawDataHandler()
-    ///
-    /// This handler is called when the high level application receives a raw data read response from the
-    /// AvnetGenericRT real time application.
-    ///
-    ///  This handler is included as a refeence for your own custom raw data handler.
-    ///
-    /// </summary>
-    void alsPt19RawDataHandler(void* msg){
+      /// <summary>
+      ///  referenceRawDataHandler()
+      /// 
+      /// This handler is called when the high level application receives a raw data read response from the 
+      /// AvnetGenericRT real time application.
+      ///
+      ///  This handler is included as a refeence for your own custom raw data handler.
+      ///
+      /// </summary>
+      void alsPt19RawDataHandler(void* msg){
 
         // Define the expected data structure.  Note this struct came from the AvnetGroveGPS real time application code
         typedef struct
@@ -79,7 +79,7 @@ Include the interface definition in the m4_support.c 4mArray[] definition
 
         // Add message structure and logic to do something with the raw data from the 
         // real time application
-    }
+      }
 
 ## Application Manifest
 Note that high level apps and real time apps may not declare the same resources in their app_manifest.json files.  This real time application uses the following Azure Sphere resources, and is built to connect to the AvnetDefaultProject/HighLevelExampleApp application with ComponentID: 06e116bd-e3af-4bfe-a0cb-f1530b8b91ab.
