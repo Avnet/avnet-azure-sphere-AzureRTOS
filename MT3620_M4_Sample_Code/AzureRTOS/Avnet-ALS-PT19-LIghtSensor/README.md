@@ -71,11 +71,15 @@ Include the interface definition in the m4_support.c 4mArray[] definition
         {
             INTER_CORE_CMD cmd;
             uint32_t sensorSampleRate;
-            uint32_t lightSensorAdcData;
+            uint32_t sensorData;
+            double lightSensorLuxData;
         } IC_COMMAND_BLOCK_ALS_PT19;
 
-        IC_COMMAND_BLOCK_ALS_PT19 *messageData = (IC_COMMAND_BLOCK_ALS_PT19*) msg;
-        Log_Debug("RX Raw Data: lightSensorAdcData: %d\n", messageData->lightSensorAdcData);
+        uint32_t rawSensorData = messageData->sensorData;
+        Log_Debug("Sensor data: %d\n", rawSensorData);
+  	    
+        light_sensor = messageData->lightSensorLuxData;   
+        Log_Debug("RX Lux data: %.2f\n", light_sensor);
 
         // Add message structure and logic to do something with the raw data from the 
         // real time application

@@ -91,11 +91,13 @@ typedef enum
 	IC_SET_SAMPLE_RATE
 } INTER_CORE_CMD;
 
+// Define the expected data structure.  Note this struct came from the AvnetGroveGPS real time application code
 typedef struct
 {
-	INTER_CORE_CMD cmd;
-	uint32_t sensorSampleRate;
-    uint32_t lightSensorAdcData;
+    INTER_CORE_CMD cmd;
+    uint32_t sensorSampleRate;
+    uint32_t sensorData;
+    double lightSensorLuxData;
 } IC_COMMAND_BLOCK_ALS_PT19;
 
 // Define the bits used for the telemetry event flag construct
@@ -329,9 +331,12 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     case IC_READ_SENSOR:
 
                         // Read the light sensor data and copy it into the response buffer
-                        commandMsg->lightSensorAdcData = adcRead();
+                        commandMsg->sensorData = adcRead();
+                        printf("RealTime App sending sensor reading 32-bit: %lu\n", commandMsg->sensorData);
 
-                        printf("RealTime App sending sensor reading 32-bit: %lu\n", commandMsg->lightSensorAdcData);
+                        // Read the light sensor data and copy it into the response buffer
+                        commandMsg->lightSensorLuxData = (float)(commandMsg->sensorData*2.5/4095)*1000000 / (float)(3650*0.1428);
+                        printf("RealTime App sending LUX data: %.2fu\n", commandMsg->lightSensorLuxData);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_ALS_PT19)+1);
