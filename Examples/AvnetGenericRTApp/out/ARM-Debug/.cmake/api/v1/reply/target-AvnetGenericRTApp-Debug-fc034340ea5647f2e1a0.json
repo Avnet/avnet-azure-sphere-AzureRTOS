@@ -46,7 +46,7 @@
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 54,
+				"line" : 55,
 				"parent" : 0
 			},
 			{
@@ -139,25 +139,29 @@
 				{
 					"backtrace" : 10,
 					"define" : "OSAI_ENABLE_DMA"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "TX_INCLUDE_USER_DEFINE_FILE"
 				}
 			],
 			"includes" : 
 			[
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/AvnetGenericRTApp"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/AvnetGenericRTApp"
 				},
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/PUBLIC"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/PUBLIC"
 				},
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/."
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/."
 				},
 				{
 					"backtrace" : 12,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/../OS_HAL/inc"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/../../MT3620_M4_Sample_Code/OS_HAL/inc"
 				},
 				{
 					"backtrace" : 3,
@@ -182,6 +186,18 @@
 				{
 					"backtrace" : 3,
 					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_BSP/./mt3620/inc"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/threadx/ports/cortex_m4/gnu/inc"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/threadx/common/inc"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/threadx/custom_inc"
 				},
 				{
 					"isSystem" : true,
@@ -246,25 +262,29 @@
 				{
 					"backtrace" : 10,
 					"define" : "OSAI_ENABLE_DMA"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "TX_INCLUDE_USER_DEFINE_FILE"
 				}
 			],
 			"includes" : 
 			[
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/AvnetGenericRTApp"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/AvnetGenericRTApp"
 				},
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/PUBLIC"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/PUBLIC"
 				},
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/."
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/."
 				},
 				{
 					"backtrace" : 12,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/../OS_HAL/inc"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/../../MT3620_M4_Sample_Code/OS_HAL/inc"
 				},
 				{
 					"backtrace" : 3,
@@ -289,6 +309,18 @@
 				{
 					"backtrace" : 3,
 					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_BSP/./mt3620/inc"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/threadx/ports/cortex_m4/gnu/inc"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/threadx/common/inc"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/threadx/custom_inc"
 				}
 			],
 			"language" : "ASM",
@@ -300,6 +332,10 @@
 	],
 	"dependencies" : 
 	[
+		{
+			"backtrace" : 3,
+			"id" : "threadx::@f7d7da5000183dea9a87"
+		},
 		{
 			"backtrace" : 3,
 			"id" : "MT3620_M4_Driver::@0a784b01baa11b8c1400"
@@ -319,7 +355,7 @@
 				"role" : "flags"
 			},
 			{
-				"fragment" : "-nostartfiles -Wl,--no-undefined -Wl,-n -T \"C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/linker.ld\"",
+				"fragment" : "-nostartfiles -Wl,--no-undefined -Wl,-n -T \"C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/linker.ld\"",
 				"role" : "flags"
 			},
 			{
@@ -335,6 +371,11 @@
 			{
 				"backtrace" : 3,
 				"fragment" : "lib\\MT3620_M4_Driver\\libMT3620_M4_Driver.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "threadx\\libthreadx.a",
 				"role" : "libraries"
 			},
 			{

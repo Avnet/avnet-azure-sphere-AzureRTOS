@@ -8,7 +8,8 @@
 					"build" : ".",
 					"childIndexes" : 
 					[
-						1
+						1,
+						3
 					],
 					"minimumCMakeVersion" : 
 					{
@@ -53,6 +54,45 @@
 					[
 						1
 					]
+				},
+				{
+					"build" : "threadx",
+					"childIndexes" : 
+					[
+						4,
+						5
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "threadx",
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"build" : "threadx/ports/cortex_m4/gnu",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 3,
+					"source" : "threadx/ports/cortex_m4/gnu"
+				},
+				{
+					"build" : "threadx/common",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 3,
+					"source" : "threadx/common"
 				}
 			],
 			"name" : "Debug",
@@ -61,7 +101,8 @@
 				{
 					"childIndexes" : 
 					[
-						1
+						1,
+						3
 					],
 					"directoryIndexes" : 
 					[
@@ -101,6 +142,20 @@
 					[
 						1
 					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3,
+						4,
+						5
+					],
+					"name" : "threadx",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						4
+					]
 				}
 			],
 			"targets" : 
@@ -108,30 +163,37 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "AvnetGenericRTApp::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-AvnetGenericRTApp-Debug-adae818ae7deff0780ef.json",
+					"jsonFile" : "target-AvnetGenericRTApp-Debug-fc034340ea5647f2e1a0.json",
 					"name" : "AvnetGenericRTApp",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 2,
 					"id" : "MT3620_M4_BSP::@65d7ac6506b1e25f9f50",
-					"jsonFile" : "target-MT3620_M4_BSP-Debug-bf2c0398387d2ff735d8.json",
+					"jsonFile" : "target-MT3620_M4_BSP-Debug-360912d457540ac71ba1.json",
 					"name" : "MT3620_M4_BSP",
 					"projectIndex" : 2
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "MT3620_M4_Driver::@0a784b01baa11b8c1400",
-					"jsonFile" : "target-MT3620_M4_Driver-Debug-5d1c216d12ecf3a4a5cf.json",
+					"jsonFile" : "target-MT3620_M4_Driver-Debug-a1662b2fb38d5cb008be.json",
 					"name" : "MT3620_M4_Driver",
 					"projectIndex" : 1
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "MakeImage::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-MakeImage-Debug-b79f306d63a310c8b20d.json",
+					"jsonFile" : "target-MakeImage-Debug-1e9f14fe0f1fae7f573a.json",
 					"name" : "MakeImage",
 					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "threadx::@f7d7da5000183dea9a87",
+					"jsonFile" : "target-threadx-Debug-97a4e576c08932aaed35.json",
+					"name" : "threadx",
+					"projectIndex" : 3
 				}
 			]
 		}
@@ -139,8 +201,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/out/ARM-Debug",
-		"source" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp"
+		"build" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug",
+		"source" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp"
 	},
 	"version" : 
 	{

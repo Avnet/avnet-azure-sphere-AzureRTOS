@@ -1,4 +1,4 @@
-# Install script for directory: C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Driver
+# Install script for directory: C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/threadx/ports/cortex_m4/gnu
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -35,11 +35,5 @@ endif()
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
   set(CMAKE_OBJDUMP "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Linux/gcc_arm/bin/arm-none-eabi-objdump.exe")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for each subdirectory.
-  include("C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver/lib/MT3620_M4_BSP/cmake_install.cmake")
-
 endif()
 

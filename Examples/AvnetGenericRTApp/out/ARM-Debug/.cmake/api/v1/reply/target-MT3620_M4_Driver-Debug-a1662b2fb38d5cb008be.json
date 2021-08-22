@@ -149,15 +149,15 @@
 			[
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/AvnetGenericRTApp"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/AvnetGenericRTApp"
 				},
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/PUBLIC"
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/PUBLIC"
 				},
 				{
 					"backtrace" : 11,
-					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/."
+					"path" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/."
 				},
 				{
 					"backtrace" : 12,

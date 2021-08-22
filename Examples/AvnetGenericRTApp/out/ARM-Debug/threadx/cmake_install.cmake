@@ -1,4 +1,4 @@
-# Install script for directory: C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Driver
+# Install script for directory: C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/threadx
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,8 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver/lib/MT3620_M4_BSP/cmake_install.cmake")
+  include("C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/threadx/ports/cortex_m4/gnu/cmake_install.cmake")
+  include("C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/threadx/common/cmake_install.cmake")
 
 endif()
 

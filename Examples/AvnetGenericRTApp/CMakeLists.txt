@@ -20,21 +20,21 @@ add_link_options(-specs=nano.specs -specs=nosys.specs)
 
 # Executable
 add_executable(${PROJECT_NAME}
-                ../../OS_HAL/src/os_hal_adc.c
-                ../../OS_HAL/src/os_hal_dma.c
-                ../../OS_HAL/src/os_hal_eint.c
-                ../../OS_HAL/src/os_hal_gpio.c
-                ../../OS_HAL/src/os_hal_gpioif.c
-                ../../OS_HAL/src/os_hal_gpt.c
-                ../../OS_HAL/src/os_hal_i2c.c
-                ../../OS_HAL/src/os_hal_i2s.c
-                ../../OS_HAL/src/os_hal_lp.c
-                ../../OS_HAL/src/os_hal_mbox.c
-                ../../OS_HAL/src/os_hal_mbox_shared_mem.c
-                ../../OS_HAL/src/os_hal_pwm.c
-                ../../OS_HAL/src/os_hal_spim.c
-                ../../OS_HAL/src/os_hal_uart.c
-                ../../OS_HAL/src/os_hal_wdt.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_adc.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_dma.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_eint.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_gpio.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_gpioif.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_gpt.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_i2c.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_i2s.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_lp.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_mbox.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_mbox_shared_mem.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_pwm.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_spim.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_uart.c
+                ../../MT3620_M4_Sample_Code/OS_HAL/src/os_hal_wdt.c
                 ./mbox_logic.c 
                 ./rtcoremain.c
                 ./tx_initialize_low_level.S)
@@ -43,16 +43,16 @@ add_executable(${PROJECT_NAME}
 include_directories(${PROJECT_NAME} PUBLIC
                     ./)
 target_include_directories(${PROJECT_NAME} PUBLIC
-                           ../OS_HAL/inc
-                           ./)
+                            ../../MT3620_M4_Sample_Code/OS_HAL/inc
+                            ./)
 
 # Libraries
 set(OSAI_AZURE_RTOS 1)
 set(THREADX_ARCH "cortex_m4")
 set(THREADX_TOOLCHAIN "gnu")
-add_subdirectory(../../../MT3620_M4_Driver ./lib/MT3620_M4_Driver)
-add_subdirectory(../../../threadx)
-target_link_libraries(${PROJECT_NAME} MT3620_M4_Driver PUBLIC threadx)
+add_subdirectory(../../MT3620_M4_Driver ./lib/MT3620_M4_Driver)
+add_subdirectory(threadx)
+target_link_libraries(${PROJECT_NAME} MT3620_M4_Driver threadx)
 
 # Linker, Image
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS ${CMAKE_SOURCE_DIR}/linker.ld)

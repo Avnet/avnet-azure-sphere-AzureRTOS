@@ -119,7 +119,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/out/ARM-Debug"
+			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug"
 		},
 		{
 			"name" : "AvnetGenericRTApp_SOURCE_DIR",
@@ -131,7 +131,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp"
+			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp"
 		},
 		{
 			"name" : "CMAKE_ADDR2LINE",
@@ -327,7 +327,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/out/ARM-Debug"
+			"value" : "c:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -583,7 +583,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "-nostartfiles -Wl,--no-undefined -Wl,-n -T \"C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/linker.ld\""
+			"value" : "-nostartfiles -Wl,--no-undefined -Wl,-n -T \"C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/linker.ld\""
 		},
 		{
 			"name" : "CMAKE_EXE_LINKER_FLAGS_DEBUG",
@@ -731,7 +731,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp"
+			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -879,7 +879,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "3"
+			"value" : "6"
 		},
 		{
 			"name" : "CMAKE_OBJCOPY",
@@ -960,6 +960,66 @@
 			],
 			"type" : "STATIC",
 			"value" : "AvnetGenericRTApp"
+		},
+		{
+			"name" : "CMAKE_PROJECT_VERSION",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "6.0.0"
+		},
+		{
+			"name" : "CMAKE_PROJECT_VERSION_MAJOR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "6"
+		},
+		{
+			"name" : "CMAKE_PROJECT_VERSION_MINOR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "0"
+		},
+		{
+			"name" : "CMAKE_PROJECT_VERSION_PATCH",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "0"
+		},
+		{
+			"name" : "CMAKE_PROJECT_VERSION_TWEAK",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : ""
 		},
 		{
 			"name" : "CMAKE_RANLIB",
@@ -1254,6 +1314,102 @@
 			"value" : "FALSE"
 		},
 		{
+			"name" : "CPACK_BINARY_7Z",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable to build 7-Zip packages"
+				}
+			],
+			"type" : "BOOL",
+			"value" : "OFF"
+		},
+		{
+			"name" : "CPACK_BINARY_IFW",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable to build IFW packages"
+				}
+			],
+			"type" : "BOOL",
+			"value" : "OFF"
+		},
+		{
+			"name" : "CPACK_BINARY_NSIS",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable to build NSIS packages"
+				}
+			],
+			"type" : "BOOL",
+			"value" : "ON"
+		},
+		{
+			"name" : "CPACK_BINARY_NUGET",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable to build NuGet packages"
+				}
+			],
+			"type" : "BOOL",
+			"value" : "OFF"
+		},
+		{
+			"name" : "CPACK_BINARY_WIX",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable to build WiX packages"
+				}
+			],
+			"type" : "BOOL",
+			"value" : "OFF"
+		},
+		{
+			"name" : "CPACK_BINARY_ZIP",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable to build ZIP packages"
+				}
+			],
+			"type" : "BOOL",
+			"value" : "OFF"
+		},
+		{
 			"name" : "MT3620_M4_BSP_BINARY_DIR",
 			"properties" : 
 			[
@@ -1263,7 +1419,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver/lib/MT3620_M4_BSP"
+			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver/lib/MT3620_M4_BSP"
 		},
 		{
 			"name" : "MT3620_M4_BSP_SOURCE_DIR",
@@ -1287,7 +1443,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver"
+			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver"
 		},
 		{
 			"name" : "MT3620_M4_Driver_LIB_DEPENDS",
@@ -1312,6 +1468,30 @@
 			],
 			"type" : "STATIC",
 			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Driver"
+		},
+		{
+			"name" : "threadx_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/threadx"
+		},
+		{
+			"name" : "threadx_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/threadx"
 		}
 	],
 	"kind" : "cache",
