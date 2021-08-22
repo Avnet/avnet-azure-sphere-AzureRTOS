@@ -1,0 +1,212 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						3
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.11"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						3
+					]
+				},
+				{
+					"build" : "lib/MT3620_M4_Driver",
+					"childIndexes" : 
+					[
+						2
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.11"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "C:/source/AvnetAzureRTOSAddSubmodules/mt3620_m4_software/MT3620_M4_Driver",
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"build" : "lib/MT3620_M4_Driver/lib/MT3620_M4_BSP",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.11"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 2,
+					"source" : "C:/source/AvnetAzureRTOSAddSubmodules/mt3620_m4_software/MT3620_M4_BSP",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "threadx",
+					"childIndexes" : 
+					[
+						4,
+						5
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "threadx",
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"build" : "threadx/ports/cortex_m4/gnu",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 3,
+					"source" : "threadx/ports/cortex_m4/gnu"
+				},
+				{
+					"build" : "threadx/common",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 3,
+					"source" : "threadx/common"
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						3
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "AvnetGenericRTApp",
+					"targetIndexes" : 
+					[
+						0,
+						3
+					]
+				},
+				{
+					"childIndexes" : 
+					[
+						2
+					],
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "MT3620_M4_Driver",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "MT3620_M4_BSP",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3,
+						4,
+						5
+					],
+					"name" : "threadx",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						4
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "AvnetGenericRTApp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-AvnetGenericRTApp-Debug-fe8d10dce8f92e64f382.json",
+					"name" : "AvnetGenericRTApp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "MT3620_M4_BSP::@65d7ac6506b1e25f9f50",
+					"jsonFile" : "target-MT3620_M4_BSP-Debug-c1a12962f869884e3327.json",
+					"name" : "MT3620_M4_BSP",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "MT3620_M4_Driver::@0a784b01baa11b8c1400",
+					"jsonFile" : "target-MT3620_M4_Driver-Debug-75d3cf98497e347a0482.json",
+					"name" : "MT3620_M4_Driver",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MakeImage::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MakeImage-Debug-1e9f14fe0f1fae7f573a.json",
+					"name" : "MakeImage",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "threadx::@f7d7da5000183dea9a87",
+					"jsonFile" : "target-threadx-Debug-aba7769b73aa905b4b63.json",
+					"name" : "threadx",
+					"projectIndex" : 3
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/Avnet-ALS-PT19-LIghtSensor/out/ARM-Debug",
+		"source" : "C:/source/AvnetAzureRTOSAddSubmodules/Examples/Avnet-ALS-PT19-LIghtSensor"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 2
+	}
+}
