@@ -251,7 +251,7 @@ CPACK_BINARY_ZIP:BOOL=OFF
 MT3620_M4_BSP_BINARY_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver/lib/MT3620_M4_BSP
 
 //Value Computed by CMake
-MT3620_M4_BSP_SOURCE_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_BSP
+MT3620_M4_BSP_SOURCE_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/mt3620_m4_software/MT3620_M4_BSP
 
 //Value Computed by CMake
 MT3620_M4_Driver_BINARY_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/lib/MT3620_M4_Driver
@@ -260,7 +260,7 @@ MT3620_M4_Driver_BINARY_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/Example
 MT3620_M4_Driver_LIB_DEPENDS:STATIC=general;MT3620_M4_BSP;
 
 //Value Computed by CMake
-MT3620_M4_Driver_SOURCE_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Driver
+MT3620_M4_Driver_SOURCE_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/mt3620_m4_software/MT3620_M4_Driver
 
 //Value Computed by CMake
 threadx_BINARY_DIR:STATIC=C:/source/AvnetAzureRTOSAddSubmodules/Examples/AvnetGenericRTApp/out/ARM-Debug/threadx

@@ -1,4 +1,4 @@
-# Install script for directory: C:/source/AvnetAzureRTOSAddSubmodules/MT3620_M4_Driver
+# Install script for directory: C:/source/AvnetAzureRTOSAddSubmodules/mt3620_m4_software/MT3620_M4_Driver
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

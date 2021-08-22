@@ -9,7 +9,7 @@
 cmake_minimum_required (VERSION 3.11)
 
 # Configurations
-project(AvnetGroveGPS C ASM)
+project(AvnetGenericRTApp C ASM)
 SET(CMAKE_ASM_FLAGS "-mcpu=cortex-m4")
 azsphere_configure_tools(TOOLS_REVISION "20.07")
 add_compile_definitions(OSAI_AZURE_RTOS)
@@ -20,21 +20,21 @@ add_link_options(-specs=nano.specs -specs=nosys.specs)
 
 # Executable
 add_executable(${PROJECT_NAME}
-                ../../OS_HAL/src/os_hal_adc.c
-                ../../OS_HAL/src/os_hal_dma.c
-                ../../OS_HAL/src/os_hal_eint.c
-                ../../OS_HAL/src/os_hal_gpio.c
-                ../../OS_HAL/src/os_hal_gpioif.c
-                ../../OS_HAL/src/os_hal_gpt.c
-                ../../OS_HAL/src/os_hal_i2c.c
-                ../../OS_HAL/src/os_hal_i2s.c
-                ../../OS_HAL/src/os_hal_lp.c
-                ../../OS_HAL/src/os_hal_mbox.c
-                ../../OS_HAL/src/os_hal_mbox_shared_mem.c
-                ../../OS_HAL/src/os_hal_pwm.c
-                ../../OS_HAL/src/os_hal_spim.c
-                ../../OS_HAL/src/os_hal_uart.c
-                ../../OS_HAL/src/os_hal_wdt.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_adc.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_dma.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_eint.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_gpio.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_gpioif.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_gpt.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_i2c.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_i2s.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_lp.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_mbox.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_mbox_shared_mem.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_pwm.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_spim.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_uart.c
+                ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_wdt.c
                 ./mbox_logic.c 
                 ./rtcoremain.c
                 ./tx_initialize_low_level.S)
@@ -43,15 +43,16 @@ add_executable(${PROJECT_NAME}
 include_directories(${PROJECT_NAME} PUBLIC
                     ./)
 target_include_directories(${PROJECT_NAME} PUBLIC
-                           ../OS_HAL/inc
-                           ./)
+                            ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/inc
+                            ./)
 
 # Libraries
 set(OSAI_AZURE_RTOS 1)
 set(THREADX_ARCH "cortex_m4")
 set(THREADX_TOOLCHAIN "gnu")
-add_subdirectory(../../../MT3620_M4_Driver ./lib/MT3620_M4_Driver)
-target_link_libraries(${PROJECT_NAME} MT3620_M4_Driver)
+add_subdirectory(../../mt3620_m4_software/MT3620_M4_Driver ./lib/MT3620_M4_Driver)
+add_subdirectory(threadx)
+target_link_libraries(${PROJECT_NAME} MT3620_M4_Driver threadx)
 
 # Linker, Image
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS ${CMAKE_SOURCE_DIR}/linker.ld)
