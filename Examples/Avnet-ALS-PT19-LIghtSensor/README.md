@@ -20,7 +20,88 @@ This application binary can be side loaded onto your device with the following c
 * `azsphere device enable-development`
 * `azsphere device sideload deploy --image-package ./AvnetAlsPt19TRApp.imagepackage`
 
-# Configuring the Avnet Default High Level application to use this example
+# Configuring the Avnet Default High Level application to use this example (DevX)
+To configure a high level DevX application to use this binary ...
+
+* Copy als_pt19_light_sensor.h from the example repo into your project directory
+
+* Include the header files in main.c
+  * `#include "dx_intercore.h"`
+  * `#include "als_pt19_light_sensor.h"`
+
+* Add handler function definition to the Forward declarations section in main.c
+  * `static void alsPt19_receive_msg_handler(void *data_block, ssize_t message_length);`
+
+* Add the binding to main.c
+
+      /****************************************************************************************
+      * Inter Core Bindings
+      *****************************************************************************************/
+      IC_COMMAND_BLOCK_ALS_PT19 ic_control_block_alsPt19_light_sensor = {.cmd = IC_READ_SENSOR,
+                                                                         .lightSensorLuxData = 0.0,
+                                                                         .sensorData = 0,
+                                                                         .sensorSampleRate = 0};
+
+      DX_INTERCORE_BINDING intercore_alsPt19_light_sensor = {
+       .sockFd = -1,
+       .nonblocking_io = true,
+       .rtAppComponentId = "b2cec904-1c60-411b-8f62-5ffe9684b8ce",
+       .interCoreCallback = alsPt19_receive_msg_handler,
+       .intercore_recv_block = &ic_control_block_alsPt19_light_sensor,
+       .intercore_recv_block_length = sizeof(ic_control_block_alsPt19_light_sensor)};
+
+* Include the handler to process interCore responses
+
+      /// <summary>
+      /// alsPt19_receive_msg_handler()
+      /// This handler is called when the high level application receives a raw data read response from the 
+      /// AvnetAls-PT19 real time application.
+      /// </summary>
+      static void alsPt19_receive_msg_handler(void *data_block, ssize_t message_length)
+      {
+
+        float light_sensor = 0.0;
+
+        // Cast the data block so we can index into the data
+        IC_COMMAND_BLOCK_ALS_PT19 *messageData = (IC_COMMAND_BLOCK_ALS_PT19*) data_block;
+
+       switch (messageData->cmd) {
+           case IC_READ_SENSOR:
+               // Pull the sensor data already in units of Lux
+               light_sensor = messageData->lightSensorLuxData;
+               break;
+           // Handle the other cases by doing nothing`
+           case IC_UNKNOWN:
+           case IC_HEARTBEAT:
+           case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+           case IC_SET_SAMPLE_RATE:
+               break;
+           default:
+               break;
+           }
+      }
+
+
+* Add code to read the sensor in your application
+
+      // Send read sensor message to realtime core app one
+      ic_control_block_alsPt19_light_sensor.cmd = IC_READ_SENSOR;
+      dx_intercorePublish(&intercore_alsPt19_light_sensor, &ic_control_block_alsPt19_light_sensor,
+                            sizeof(IC_COMMAND_BLOCK_ALS_PT19));
+
+* Update the app_manifest.json file with the real time application's ComponentID
+
+ `"AllowedApplicationConnections": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ],`
+
+* Update the launch.vs.json  file with the real time application's ComponentID
+
+`"partnerComponents": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ]`
+
+* Update the .vscode\launch.json  file with the real time application's ComponentID
+
+`"partnerComponents": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ]`
+
+# Configuring the Avnet Default High Level application to use this example (Avnet Default Sample)
 To configure the high level application to use this binary ...
 
 * Add the function definition to m4_support.h

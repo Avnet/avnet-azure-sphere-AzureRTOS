@@ -19,8 +19,87 @@ This application binary can be side loaded onto your device with the following c
 * `azsphere device enable-development`
 * `azsphere device sideload deploy --image-package ./AvnetGenericRTExample.imagepackage`
 
-# Configuring the Avnet Default High Level applicatin to use this example
+# Configuring the Avnet Default High Level application to use this example (DevX)
+To configure a high level DevX application to use this binary ...
 
+* Copy generic_rt_app.h from the example repo into your project directory
+
+* Include the header files in main.c
+  * `#include "dx_intercore.h"`
+  * `#include "generic_rt_app.h"`
+
+* Add handler function definition to the Forward declarations section in main.c
+  * `static void generic_receive_msg_handler(void *data_block, ssize_t message_length);`
+
+* Add the binding to main.c
+
+      /****************************************************************************************
+      * Inter Core Bindings
+      *****************************************************************************************/
+      IC_COMMAND_BLOCK_GENERIC_RT_APP ic_control_block_generic = {.cmd = IC_READ_SENSOR,
+                                                                  .rawData8bit = 0,
+                                                                  .rawDataFloat = 0.0,
+                                                                  .sensorSampleRate = 0};
+
+      DX_INTERCORE_BINDING intercore_generic_app = {
+         .sockFd = -1,
+         .nonblocking_io = true,
+         .rtAppComponentId = "9f19b84b-d83c-442b-b8b8-ce095a3b9b33",
+         .interCoreCallback = generic_receive_msg_handler,
+         .intercore_recv_block = &ic_control_block_generic,
+         .intercore_recv_block_length = sizeof(ic_control_block_generic)};
+
+* Include the handler to process interCore responses
+
+      /// <summary>
+      /// generic_receive_msg_handler()
+      /// This handler is called when the high level application receives a raw data read response from the 
+      /// Avnet-generic real time application.
+      /// </summary>
+      static void generic_receive_msg_handler(void *data_block, ssize_t message_length)
+      {
+
+        // Cast the data block so we can index into the data
+        IC_COMMAND_BLOCK_GENERIC_RT_APP *messageData = (IC_COMMAND_BLOCK_GENERIC_RT_APP*) data_block;
+
+       switch (messageData->cmd) {
+           case IC_READ_SENSOR:
+               // Pull the data
+               Log_Debug("RX: %d\n", messageData->rawData8bit);
+               Log_Debug("RX: %.2f\n", messageData->rawDataFloat);
+               break;
+           // Handle the other cases by doing nothing`
+           case IC_UNKNOWN:
+           case IC_HEARTBEAT:
+           case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+           case IC_SET_SAMPLE_RATE:
+               break;
+           default:
+               break;
+           }
+      }
+
+* Add code to read the sensor in your application
+
+          // send read sensor message to realtime core app one
+          ic_control_block_generic.cmd = IC_READ_SENSOR;
+
+          dx_intercorePublish(&intercore_generic_app, &ic_control_block_generic,
+                                  sizeof(ic_control_block_generic));
+
+* Update the app_manifest.json file with the real time application's ComponentID
+
+ `"AllowedApplicationConnections": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ],`
+
+* Update the launch.vs.json  file with the real time application's ComponentID
+
+`"partnerComponents": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ]`
+
+* Update the .vscode\launch.json  file with the real time application's ComponentID
+
+`"partnerComponents": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ]`
+
+# Configuring the Avnet Default High Level application to use this example (Avnet Default Sample)
 To configure the high level application to use this binary ...
 
 Include the interface definition in the m4_support.c 4mArray[] definition
