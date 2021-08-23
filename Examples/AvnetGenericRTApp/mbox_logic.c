@@ -42,6 +42,7 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
+#include "generic_rt_app.h"
  
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -66,26 +67,6 @@ static UINT send_telemetry_thread_period = 0;
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
 
-// Define the different messages IDs we can send to real time applications
-// If this enum is changed, it also needs to be changed for the high level application
-typedef enum
-{
-	IC_UNKNOWN, 
-    IC_HEARTBEAT,
-	IC_READ_SENSOR, 
-	IC_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-	IC_SET_SAMPLE_RATE
-} INTER_CORE_CMD;
-
-typedef struct
-{
-	INTER_CORE_CMD cmd;
-	uint32_t sensorSampleRate;
-	uint8_t rawData8bit;
-	float rawDataFloat;
-} IC_COMMAND_BLOCK_GENERIC_RT_APP;
-
-
 // Define the bits used for the telemetry event flag construct
 enum triggers {
     HIGH_LEVEL_MESSAGE = 0,
@@ -106,7 +87,6 @@ volatile UCHAR  blockFifoSema;
 TX_THREAD               thread_mbox;
 TX_THREAD               thread_set_telemetry_flag;
 TX_THREAD               tx_hardware_init_thread;
-
 
 // Application memory pool
 TX_BYTE_POOL            byte_pool_0;

@@ -42,6 +42,7 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
+#include "grove_gps.h"
  
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -92,27 +93,7 @@ static volatile bool hardwareInitOK = false;
     double alt_sl;
     char   alt_sl_units[2];
 
-// Define the different messages IDs we can send to real time applications
-// If this enum is changed, it also needs to be changed for the high level application
-typedef enum
-{
-	IC_UNKNOWN, 
-    IC_HEARTBEAT,
-	IC_READ_SENSOR, 
-	IC_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-	IC_SET_SAMPLE_RATE
-} INTER_CORE_CMD;
 
-typedef struct
-{
-	INTER_CORE_CMD cmd;
-	uint32_t sensorSampleRate;
-	double lat;
-    double lon;
-    int fix_qual;
-	int numsats;
-    float alt;
-} IC_COMMAND_BLOCK_GROVE_GPS;
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {

@@ -43,6 +43,7 @@
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
 #include "os_hal_adc.h"
+#include "als_pt19_light_sensor.h"
  
 
 #define ADC_GPIO                41            /* ADC0 = GPIO41 */
@@ -79,26 +80,6 @@ static UINT send_telemetry_thread_period = 0;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
-
-// Define the different messages IDs we can send to real time applications
-// If this enum is changed, it also needs to be changed for the high level application
-typedef enum
-{
-	IC_UNKNOWN, 
-    IC_HEARTBEAT,
-	IC_READ_SENSOR, 
-	IC_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-	IC_SET_SAMPLE_RATE
-} INTER_CORE_CMD;
-
-// Define the expected data structure.  Note this struct came from the AvnetGroveGPS real time application code
-typedef struct
-{
-    INTER_CORE_CMD cmd;
-    uint32_t sensorSampleRate;
-    uint32_t sensorData;
-    double lightSensorLuxData;
-} IC_COMMAND_BLOCK_ALS_PT19;
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {
