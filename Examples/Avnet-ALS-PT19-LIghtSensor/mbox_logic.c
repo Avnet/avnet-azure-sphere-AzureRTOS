@@ -186,7 +186,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS ALS-PT19 Light Sensor application ****\n");
+    printf("\n\n**** Avnet AzureRTOS ALS-PT19 V2 Light Sensor application ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -317,7 +317,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                         // Read the light sensor data and copy it into the response buffer
                         commandMsg->lightSensorLuxData = (float)(commandMsg->sensorData*2.5/4095)*1000000 / (float)(3650*0.1428);
-                        printf("RealTime App sending LUX data: %.2fu\n", commandMsg->lightSensorLuxData);
+                        printf("RealTime App sending LUX data: %.2f\n", commandMsg->lightSensorLuxData);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_ALS_PT19)+1);

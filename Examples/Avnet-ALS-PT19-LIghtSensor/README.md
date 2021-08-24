@@ -50,6 +50,9 @@ To configure a high level DevX application to use this binary ...
        .intercore_recv_block = &ic_control_block_alsPt19_light_sensor,
        .intercore_recv_block_length = sizeof(ic_control_block_alsPt19_light_sensor)};
 
+* Initialize the intercore communications in the init routine
+      dx_intercoreConnect(&intercore_alsPt19_light_sensor);
+
 * Include the handler to process interCore responses
 
       /// <summary>

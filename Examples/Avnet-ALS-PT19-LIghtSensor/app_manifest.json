@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "Name": "Avnet-Als-PT19-RTApp",
+  "Name": "Avnet-Als-PT19-RTAppV2",
   "ComponentId": "b2cec904-1c60-411b-8f62-5ffe9684b8ce",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
