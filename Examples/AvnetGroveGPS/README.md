@@ -47,6 +47,9 @@ To configure a high level DevX application to use this binary ...
            .intercore_recv_block = &ic_control_block_grove,
            .intercore_recv_block_length = sizeof(ic_control_block_grove)};
 
+* Initialize the intercore communications in the init routine
+        dx_intercoreConnect(&intercore_grove_app);
+
 * Include the handler to process interCore responses
 
       /// <summary>
