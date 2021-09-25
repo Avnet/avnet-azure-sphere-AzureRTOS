@@ -50,7 +50,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-MT3620_M4_Sample_Code/AzureRTOS/AvnetGroveGPS/out/*
-MT3620_M4_Sample_Code/AzureRTOS/AvnetGenericRTApp/out/*
-MT3620_M4_Sample_Code/AzureRTOS/Avnet-ALS-PT19-LIghtSensor/out/*
-
+Examples/AvnetGroveGPS/out/*
+Examples/AvnetGenericRTApp/out/*
+Examples/Avnet-ALS-PT19-LIghtSensor/out/*

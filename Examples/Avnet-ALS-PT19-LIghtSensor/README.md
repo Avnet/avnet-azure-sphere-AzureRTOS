@@ -1,6 +1,7 @@
 # Real time application information for AvnetAlsPt19RTApp
 
-The Avnet ALS-PT19 AzureRTOS real time application reads adc data from the Avnet Starter Kit's on-board ALS-PT19 light sensor and passes telemetry data to the high level application over the inter-core communications path.
+The Avnet ALS-PT19 AzureRTOS real time application reads adc data from the Avnet Starter Kit's on-board ALS-PT19 light sensor and passes 
+sernsor data and/or telemetry data to the high level application over the inter-core communications path.
 
 # The appliation supports the following Avnet inter-core implementation messages . . .
 
@@ -50,11 +51,11 @@ To configure a high level DevX application to use this binary ...
        .intercore_recv_block = &ic_control_block_alsPt19_light_sensor,
        .intercore_recv_block_length = sizeof(ic_control_block_alsPt19_light_sensor)};
 
-* Initialize the intercore communications in the init routine
+* Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
       dx_intercoreConnect(&intercore_alsPt19_light_sensor);
 
 * Include the handler to process interCore responses
-
+      o
       /// <summary>
       /// alsPt19_receive_msg_handler()
       /// This handler is called when the high level application receives a raw data read response from the 
@@ -63,27 +64,38 @@ To configure a high level DevX application to use this binary ...
       static void alsPt19_receive_msg_handler(void *data_block, ssize_t message_length)
       {
 
-        float light_sensor = 0.0;
+      uint32_t light_sensor_adc_data = 0;
+      float light_sensor = 0.0;
 
-        // Cast the data block so we can index into the data
-        IC_COMMAND_BLOCK_ALS_PT19 *messageData = (IC_COMMAND_BLOCK_ALS_PT19*) data_block;
+      // Cast the data block so we can index into the data
+      IC_COMMAND_BLOCK_ALS_PT19 *messageData = (IC_COMMAND_BLOCK_ALS_PT19*) data_block;
 
-       switch (messageData->cmd) {
-           case IC_READ_SENSOR:
-               // Pull the sensor data already in units of Lux
-               light_sensor = messageData->lightSensorLuxData;
-               break;
-           // Handle the other cases by doing nothing`
-           case IC_UNKNOWN:
-           case IC_HEARTBEAT:
-           case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-           case IC_SET_SAMPLE_RATE:
-               break;
-           default:
-               break;
-           }
+      switch (messageData->cmd) {
+          case IC_READ_SENSOR:
+              // Pull the sensor data already in units of Lux
+              light_sensor = (float)messageData->lightSensorLuxData;
+              light_sensor_adc_data = (uint32_t)messageData->sensorData;
+
+              Log_Debug("IC_READ_SENSOR:          lux - %.2f Lux\n", light_sensor);
+              Log_Debug("IC_READ_SENSOR: ADC Raw Data - %d adc raw deta\n", light_sensor_adc_data);
+
+              break;
+          // Handle the other cases by doing nothing
+          case IC_HEARTBEAT:
+              Log_Debug("IC_HEARTBEAT\n");
+              break;
+          case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+              Log_Debug("IC_READ_SENSOR_RESPOND_WITH_TELEMETRY\n");
+              Log_Debug("%s\n", messageData->telemetryJSON);
+              break;
+          case IC_SET_SAMPLE_RATE:
+              Log_Debug("IC_SET_SAMPLE_RATE\n");
+              break;
+          case IC_UNKNOWN:
+          default:
+              break;
+          }
       }
-
 
 * Add code to read the sensor in your application
 
