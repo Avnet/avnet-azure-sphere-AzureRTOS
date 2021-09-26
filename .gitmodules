@@ -10,3 +10,6 @@
 [submodule "threadxGrove"]
 	path = Examples/AvnetGroveGPS/threadx
 	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/AvnetHwWatchDogRTApp/threadx"]
+	path = Examples/AvnetHwWatchDogRTApp/threadx
+	url = https://github.com/azure-rtos/threadx
