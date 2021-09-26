@@ -7,17 +7,14 @@
 typedef enum __attribute__((packed))
 {
 	IC_UNKNOWN,
-		IC_HEARTBEAT,
-		IC_READ_SENSOR,
-		IC_READ_SENSOR_RESPOND_WITH_TELEMETRY,
-		IC_SET_SAMPLE_RATE
-} INTER_CORE_CMD;
+		IC_WD_SET_INTERVAL,
+		IC_WD_TICKLE_WATCH_DOG,
+		IC_WD_START,
+		IC_WD_STOP
+} WD_INTER_CORE_CMD;
 
 typedef struct __attribute__((packed))
 {
-	INTER_CORE_CMD cmd;
-	uint32_t sensorSampleRate;
-	uint8_t rawData8bit;
-	float rawDataFloat;
-	char telemetryJSON[128];
-} IC_COMMAND_BLOCK_GENERIC_RT_APP;
+	WD_INTER_CORE_CMD cmd;
+	uint32_t watchDogInterval;
+} IC_COMMAND_BLOCK_HW_WD;

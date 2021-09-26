@@ -2,98 +2,111 @@
 
 # The appliation supports the following Avnet inter-core implementation messages . . .
 
-* IC_HEARTBEAT 
-  * The application echos back the IC_HEARTBEAT response
-* IC_READ_SENSOR
-  * The application returns simulated data in the  rawData8bit and rawDatafloat response data fields
-* IC_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-  * The application generates random data returns properly formatted JSON
-  * {"sampleRtKeyString":"AvnetKnowsIoT", "sampleRtKeyInt":84, "sampleRtKeyFloat":16.354}
-* IC_SET_SAMPLE_RATE
-  * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
+* IC_WD_SET_INTERVAL 
+  * Set the watch dog timeout value <= 64.  If a value > 64 is sent the application will default to 64 seconds.
+* IC_WD_START
+  * Enables/starts the hardware watch dog functionality
+* IC_WD_STOP
+  * Disables/stops/suspends the hardware watch dog functionality
+* IC_WD_TICKLE
+  * Tickles the watch dog.  When the application receives the tickle command the watch dog timer is reset to the pre-configured interval sent down by the IC_WD_SET_INTERVAL command
 
 # Sideloading the appliction binary
 
 This application binary can be side loaded onto your device with the following commands . . .
 
 * `azsphere device enable-development`
-* `azsphere device sideload deploy --image-package ./AvnetGenericRTExample.imagepackage`
+* `azsphere device sideload deploy --image-package ./AvnetHwWatchDogRTApp.imagepackage`
 
 # Configuring the Avnet Default High Level application to use this example (DevX)
 To configure a high level DevX application to use this binary ...
 
-* Copy generic_rt_app.h from the example repo into your project directory
+* Copy hw_watchdog_app.h from the example repo into your project directory
 
 * Include the header files in main.c
   * `#include "dx_intercore.h"`
-  * `#include "generic_rt_app.h"`
+  * `#include "hw_watchdog_app.h"`
 
 * Add handler function definition to the Forward declarations section in main.c
-  * `static void generic_receive_msg_handler(void *data_block, ssize_t message_length);`
+  * `static void watch_dog_receive_msg_handler(void *data_block, ssize_t message_length);`
 
 * Add the binding to main.c
 
       /****************************************************************************************
       * Inter Core Bindings
       *****************************************************************************************/
-      IC_COMMAND_BLOCK_GENERIC_RT_APP ic_control_block_generic = {.cmd = IC_READ_SENSOR,
-                                                                  .rawData8bit = 0,
-                                                                  .rawDataFloat = 0.0,
-                                                                  .sensorSampleRate = 0};
+      IC_COMMAND_BLOCK_HW_WD ic_control_block_watch_dog = {.cmd = IC_STOP,
+                                                           .watchDogInterval = 64};
 
-      DX_INTERCORE_BINDING intercore_generic_app = {
+      DX_INTERCORE_BINDING intercore_watch_dog_app = {
          .sockFd = -1,
          .nonblocking_io = true,
-         .rtAppComponentId = "9f19b84b-d83c-442b-b8b8-ce095a3b9b33",
-         .interCoreCallback = generic_receive_msg_handler,
-         .intercore_recv_block = &ic_control_block_generic,
-         .intercore_recv_block_length = sizeof(ic_control_block_generic)};
+         .rtAppComponentId = "68d57215-8bf1-4b0b-a0d6-0040fd0b3686",
+         .interCoreCallback = watch_dog_receive_msg_handler,
+         .intercore_recv_block = &ic_control_block_watch_dog,
+         .intercore_recv_block_length = sizeof(ic_control_block_watch_dog)};
 
 * Initialize the intercore communications in the init routine
-        dx_intercoreConnect(&intercore_generic_app);
+        dx_intercoreConnect(&intercore_watch_dog_app);
       
+* Add code to configure and start the watch dog
+
+        // Send read sensor message to realtime core app one
+        Log_Debug("Set the Watch Dog interval to 20 seconds\n");
+        ic_control_block_watch_dog.cmd = IC_WD_SET_INTERVAL;
+        ic_control_block_watch_dog.watchDogInterval = 20;
+            
+        dx_intercorePublish(&intercore_watch_dog_app, &ic_control_block_watch_dog,
+                                sizeof(IC_COMMAND_BLOCK_HW_WD));
+
+        // Start the watch dog
+        Log_Debug("Start the Watch Dog\n");
+        ic_control_block_watch_dog.cmd = IC_WD_START;
+            
+        dx_intercorePublish(&intercore_watch_dog_app, &ic_control_block_watch_dog,
+                                sizeof(IC_COMMAND_BLOCK_HW_WD));
+
 * Include the handler to process interCore responses
 
-      /// <summary>
-      /// generic_receive_msg_handler()
-      /// This handler is called when the high level application receives a raw data read response from the 
-      /// Avnet-generic real time application.
-      /// </summary>
-      static void generic_receive_msg_handler(void *data_block, ssize_t message_length)
-      {
+        /// <summary>
+        /// watch_dog_receive_msg_handler()
+        /// This handler is called when the high level application receives a raw data read response from the 
+        /// AvnetHwWatchDogRTApp real time application.
+        /// </summary>
+        static void watch_dog_receive_msg_handler(void *data_block, ssize_t message_length)
+        {
 
-              // Cast the data block so we can index into the data
-              IC_COMMAND_BLOCK_GENERIC_RT_APP *messageData = (IC_COMMAND_BLOCK_GENERIC_RT_APP*) data_block;
+                // Cast the data block so we can index into the data
+                IC_COMMAND_BLOCK_HW_WD *messageData = (IC_COMMAND_BLOCK_HW_WD*) data_block;
 
-      switch (messageData->cmd) {
-          case IC_READ_SENSOR:
-              // Pull the sensor data already in units of Lux
-                    Log_Debug("RX: %d\n", messageData->rawData8bit);
-                    Log_Debug("RX: %.2f\n", messageData->rawDataFloat);
-              break;
-          // Handle the other cases by doing nothing
-          case IC_HEARTBEAT:
-              Log_Debug("IC_HEARTBEAT\n");
-              break;
-          case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-              Log_Debug("IC_READ_SENSOR_RESPOND_WITH_TELEMETRY\n");
-              Log_Debug("%s\n", messageData->telemetryJSON);
-              break;
-          case IC_SET_SAMPLE_RATE:
-              Log_Debug("IC_SET_SAMPLE_RATE\n");
-              break;
-          case IC_UNKNOWN:
-          default:
-              break;
-          }
-      }
-* Add code to read the sensor in your application
+        switch (messageData->cmd) {
+            case IC_WD_SET_INTERVAL:
+                // Pull the sensor data already in units of Lux
+                    Log_Debug("WD Interval: %d\n", messageData->watchDogInterval);
+                break;
+            // Handle the other cases by doing nothing
+            case IC_WD_TICKLE_WATCH_DOG:
+                Log_Debug("IC_WD_TICKLE_WATCH_DOG\n");
+                break;
+            case IC_WD_START:
+                Log_Debug("IC_WD_START\n");
+                break;
+            case IC_WD_STOP:
+                Log_Debug("IC_WD_STOP\n");
+                break;
+            case IC_UNKNOWN:
+            default:
+                break;
+            }
+        }
+* Add code to periodically tickle the watch dog
 
-          // send read sensor message to realtime core app one
-          ic_control_block_generic.cmd = IC_READ_SENSOR;
-
-          dx_intercorePublish(&intercore_generic_app, &ic_control_block_generic,
-                                  sizeof(ic_control_block_generic));
+        // Send read sensor message to realtime core app one
+        Log_Debug("Send IC_SET_SAMPLE_RATE command: %d\n", count);
+        ic_control_block_watch_dog.cmd = IC_WD_TICKLE_WATCH_DOG;
+        
+        dx_intercorePublish(&intercore_watch_dog_app, &ic_control_block_watch_dog,
+                                sizeof(IC_COMMAND_BLOCK_HW_WD));
 
 * Update the app_manifest.json file with the real time application's ComponentID
 
@@ -154,9 +167,9 @@ Include the interface definition in the m4_support.c 4mArray[] definition
             uint32_t sensorSampleRate;
             uint8_t rawData8bit;
             float rawDataFloat; 
-        } IC_COMMAND_BLOCK_GENERIC_RT_APP;
+        } IC_COMMAND_BLOCK_HW_WD;
 
-        IC_COMMAND_BLOCK_GENERIC_RT_APP *messageData = (IC_COMMAND_BLOCK_GENERIC_RT_APP*) msg;
+        IC_COMMAND_BLOCK_HW_WD *messageData = (IC_COMMAND_BLOCK_HW_WD*) msg;
         Log_Debug("RX Raw Data: rawData8bit: %d, rawDataFloat: %.2f\n",
               messageData->rawData8bit, messageData->rawDataFloat);
 

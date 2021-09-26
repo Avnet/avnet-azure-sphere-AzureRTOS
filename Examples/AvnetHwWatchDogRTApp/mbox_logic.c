@@ -42,7 +42,8 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "generic_rt_app.h"
+#include "hw_watchdog_app.h"
+#include "os_hal_wdt.h"
  
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -51,6 +52,9 @@
 #define APP_STACK_SIZE      1024
 #define DEMO_BYTE_POOL_SIZE 9120
 #define MBOX_BUFFER_LEN_MAX 1044
+
+// The maximum allowed timer value is 64 seconds
+#define MAX_WD_TIMER_SECONDS 64
 
 // Shared memory details
 #define RESERVED_BYTES_IN_SHARED_MEMORY 4
@@ -62,7 +66,7 @@ typedef struct __attribute__((packed))
 {
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_GENERIC_RT_APP payload; // Pointer to the message data from/to the high level application
+    IC_COMMAND_BLOCK_HW_WD payload; // Pointer to the message data from/to the high level application
 } IC_SHARED_MEMORY_BLOCK;
 
 static UCHAR mbox_local_buf[MBOX_BUFFER_LEN_MAX];
@@ -73,22 +77,19 @@ char messageHeader[COMMAND_BLOCK_OFFSET];
 /* Bitmap for IRQ enable. bit_0 and bit_1 are used to communicate with HL_APP */
 static const UINT mbox_irq_status = 0x3;
 
-// Variable to track how often we send telemetry if configured to do so from the high level application
-// When this variable is set to 0, telemetry is only sent when the high level application request it
-// When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 0;
+// Global variable to hold the current watchdog timeout value
+static UINT watchDogTimoutSeconds = MAX_WD_TIMER_SECONDS;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {
-    HIGH_LEVEL_MESSAGE = 0,
-    PERIODIC_TELEMETRY = 1
+    HIGH_LEVEL_MESSAGE = 0
 };
 
 // Define a variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK_GENERIC_RT_APP ic_control_block;
+IC_COMMAND_BLOCK_HW_WD ic_control_block;
 
 /* Define Semaphores */
 
@@ -107,12 +108,11 @@ TX_BYTE_POOL            byte_pool_0;
 UCHAR                   memory_area[DEMO_BYTE_POOL_SIZE];
 
 // Application flags
-TX_EVENT_FLAGS_GROUP    send_telemetry_event_flags_0;
+TX_EVENT_FLAGS_GROUP    event_flags_0;
 TX_EVENT_FLAGS_GROUP    hardware_event_flags_0;
 
 /* Define thread prototypes.  */
 void tx_thread_mbox_entry(ULONG thread_input);
-void set_telemetry_flag_thread_entry(ULONG thread_input);
 void hardware_init_thread(ULONG thread_input);
 
 /* Function prototypes */
@@ -120,7 +120,6 @@ void mbox_fifo_cb(struct mtk_os_hal_mbox_cb_data *data);
 void mbox_swint_cb(struct mtk_os_hal_mbox_cb_data *data);
 void mbox_print(UCHAR *mbox_buf, UINT mbox_data_len);
 bool initialize_hardware(void);
-void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size);
 
 /* Define main entry point.  */
 void tx_main(void)
@@ -151,10 +150,10 @@ void tx_application_define(void *first_unused_memory)
 
     // -------------------------------- Flags --------------------------------
 
-    status = tx_event_flags_create(&send_telemetry_event_flags_0, "Send Telemetry Event");
+    status = tx_event_flags_create(&event_flags_0, "Rx High Level Message Event");
     if (status != TX_SUCCESS)
     {
-        printf("failed to create send_telemetry_event_flags\r\n");
+        printf("failed to create event_flags\r\n");
     }
 
     // -------------------------------- Threads --------------------------------
@@ -169,10 +168,6 @@ void tx_application_define(void *first_unused_memory)
     /* Allocate the stack for the sensor_read_thread  */
     tx_byte_allocate(&byte_pool_0, (VOID **) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
 
-    /* Create the telemetry set flag thread.  */
-    tx_thread_create(&thread_set_telemetry_flag, "set telemetry flag thread", set_telemetry_flag_thread_entry, 0,
-            pointer, APP_STACK_SIZE, 7, 7, TX_NO_TIME_SLICE, TX_AUTO_START);
-
     /* Allocate the stack for the hardware_init_thread  */
     tx_byte_allocate(&byte_pool_0, (VOID**) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
     
@@ -185,7 +180,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS Generic application ****\n");
+    printf("\n\n**** Avnet Hardware Watch Dog application ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -231,8 +226,8 @@ void tx_thread_mbox_entry(ULONG thread_input)
         // Read the telemetry event flags, this call will block until one of the flags is set
         // Once the call returns, it will also clear the event flags.  We use the actual_flags variable
         // to determine which flag was set
-        ULONG status = tx_event_flags_get(&send_telemetry_event_flags_0, 
-                                          (0x01 << HIGH_LEVEL_MESSAGE) | (0x01 << PERIODIC_TELEMETRY), 
+        ULONG status = tx_event_flags_get(&event_flags_0, 
+                                          (0x01 << HIGH_LEVEL_MESSAGE), 
                                           TX_OR_CLEAR, &actual_flags, 
                                           TX_WAIT_FOREVER);
         
@@ -282,102 +277,76 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 /* Process the command from the high level Application */
                 switch (payloadPtr->payload.cmd)
                 {
-                    // If the high level application sends this command message, then it's requesting that 
-                    // this real time application read its sensors and return valid JSON telemetry.  Send up random
-                    // telemetry to exercise the interface.
-                    case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-
-                        readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
-                        break;
-
                     // If the real time application sends this message, then the payload contains
-                    // a new sample rate for automatically sending telemetry data.
-                    case IC_SET_SAMPLE_RATE:
+                    // a new watch dog interval time.
+                    case IC_WD_SET_INTERVAL:
 
-                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtr->payload.sensorSampleRate);
+                        // Read the new value and verify it's less than the allowed max, if not force it to the max value
+                        watchDogTimoutSeconds = payloadPtr->payload.watchDogInterval;
+                        if (watchDogTimoutSeconds > MAX_WD_TIMER_SECONDS){
+                            watchDogTimoutSeconds = MAX_WD_TIMER_SECONDS;
+                            payloadPtr->payload.watchDogInterval = MAX_WD_TIMER_SECONDS;
+                        }
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        send_telemetry_thread_period = payloadPtr->payload.sensorSampleRate;
+                        watchDogTimoutSeconds = payloadPtr->payload.watchDogInterval;
 
-                        // Wake up the telemetry thread so that it will start using the new sample rate we just set
-                        tx_thread_wait_abort(&thread_set_telemetry_flag);
+                        // Update the watchdog timer with the new value and reset the counter
+                        mtk_os_hal_wdt_set_timeout(watchDogTimoutSeconds);
+                        mtk_os_hal_wdt_restart();
 
-                        // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
+                        printf("Set the hardware watchgdog timer to %lu seconds\n", payloadPtr->payload.watchDogInterval);
+
+                        // Write to A7, enqueue to mailbox, we're just echoing back the new watch dog timer
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
 
-                    // If the real time application sends this command, then the high level application is requesting
-                    // raw data from the sensor(s).  In this case, he developer needs to understand 
-                    // what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_READ_SENSOR:
+                    case IC_WD_TICKLE_WATCH_DOG:
 
-                        // Simulate reading data from a sensor with random numbers
-                        payloadPtr->payload.rawData8bit = (int)(rand()%100);
-                        payloadPtr->payload.rawDataFloat = ((float)rand()/(float)(RAND_MAX)) * 100;
+                        // Restart the timer
+                        mtk_os_hal_wdt_restart();
 
-                        printf("RealTime App sending sensor reading 8-bit: %d\n", payloadPtr->payload.rawData8bit);
-                        printf("RealTime App sending sensor reading float: %.2f\n", payloadPtr->payload.rawDataFloat);
+                        printf("WDT Tickle . . . \n");
+
+                        // Write to A7, enqueue to mailbox, we're just echoing back the tickle command
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
+                        break;
+
+                    case IC_WD_START:
+
+                        printf("IC_WD_START\n");
+
+                        // Start the watch dog feature
+                        mtk_os_hal_wdt_enable();
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
 
-                    case IC_HEARTBEAT:
-                        printf("Realtime app processing heartbeat command\n");
+                    case IC_WD_STOP:
+
+                        printf("IC_WD_STOP\n");
+
+                        // Start the watch dog feature
+                        mtk_os_hal_wdt_disable();
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
+
                     case IC_UNKNOWN:
                     default:
                         break;
                 }
             }
-            break;
-
-        // The read sensors thread has requested that we read the sensors and send telemetry.
-        case(0x01 << PERIODIC_TELEMETRY):
-
-            readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
+        default:
             break;
         }
+
     }
     // Can we exit the application here?  If we exited the thread then there is an issue and we should restart the application
-}
 
-// This tread is responsible for setting the PERIODIC_TELEMETRY bit in the flags variable when an automatic telemetry message
-// needs to be sent to the high level application.
-void set_telemetry_flag_thread_entry(ULONG thread_input)
-{
-    ULONG status = TX_SUCCESS;
-    UINT sleep_time_seconds;
-
-    printf("Set Telemetry Flag Task Started\n");
-
-    while (1) {
-        
-        // If the period is zero set the period to 1 second so we can keep processing the thread
-        if(send_telemetry_thread_period == 0){
-            sleep_time_seconds = 1;
-        }
-        else{
-            // Else it's not zero, set the sleep time variable, set the flag, and fall through to set a new
-            // sleep period.
-            sleep_time_seconds = send_telemetry_thread_period;
-
-            status = tx_event_flags_set(&send_telemetry_event_flags_0, 0x01 << PERIODIC_TELEMETRY, TX_OR);
-            if (status != TX_SUCCESS)
-            {
-                printf("failed to set read sensors event flags\r\n");   
-            }
-            printf("\n\nSend Telemetry()\n");
-
-        }
-            
-        // Sleep the specified time
-        tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND * sleep_time_seconds);
-    }
 }
 
 // only purpose in life is to initialize the hardware.
@@ -408,7 +377,7 @@ void mbox_fifo_cb(struct mtk_os_hal_mbox_cb_data *data)
         /* A7 core write data to mailbox fifo. */
         if (data->event.wr_int) {
             blockFifoSema++;
-            tx_event_flags_set(&send_telemetry_event_flags_0, 0x01 << HIGH_LEVEL_MESSAGE, TX_OR);
+            tx_event_flags_set(&event_flags_0, 0x01 << HIGH_LEVEL_MESSAGE, TX_OR);
         }
 
     }
@@ -427,7 +396,7 @@ void mbox_swint_cb(struct mtk_os_hal_mbox_cb_data *data)
     if (data->swint.channel == OS_HAL_MBOX_CH0) {
         if (data->swint.swint_sts & (1 << 1)) {
             // There is a new message in the queue, set the flag so the mbox thread will process it
-            tx_event_flags_set(&send_telemetry_event_flags_0, 0x01 << HIGH_LEVEL_MESSAGE, TX_OR);
+            tx_event_flags_set(&event_flags_0, 0x01 << HIGH_LEVEL_MESSAGE, TX_OR);
         }
     }
 }
@@ -464,42 +433,20 @@ void mbox_print(u8 *mbox_buf, u32 mbox_data_len)
 
 // Update this routine to initialize any hardware interfaces required by your implementation
 bool initialize_hardware(void) {
-    return true;
-}
-
-void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size){
     
-    // Init a pointer to the incomming message, cast it so we can index into the structure
-    IC_SHARED_MEMORY_BLOCK *payloadPtr = (IC_SHARED_MEMORY_BLOCK*)mbox_local_buf;
+    // Setup the hardware watchdog
+    mtk_os_hal_wdt_init();
 
-    // Copy the header from the incomming message to the message going up.
-    for(int i = 0; i < COMMAND_BLOCK_OFFSET; i++){
-        mbox_local_buf[i] = messageHeader[i];
-    }
+    // Set the initial timeout
+    mtk_os_hal_wdt_set_timeout(watchDogTimoutSeconds);
 
-    // Set the response message ID
-    payloadPtr->payload.cmd = IC_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    // Setup the interrupt.  By passing in NULL, we'll leverage the default handler
+    // that will reset the system immediately.
+    mtk_os_hal_wdt_register_irq(NULL);
 
-    if(hardwareInitOK){
+    // Disable the watchdog timer.  We start in a disabled mode and will start the 
+    // timer when the high level application sends the IC_WD_START command.
+    mtk_os_hal_wdt_disable();
         
-        // Construct the telemetry JSON that will be passed to the IoTHub.  In a real application the logic
-        // would . . .
-        // 1. Read the attached sensors (or access data)
-        // 2. Construct and send telemetry JSON ("newKey"; value, "newKey2": value2, . . . ) depending on the sensor/cloud implementation
-        snprintf(payloadPtr->payload.telemetryJSON, 128, "{\"sampleRtKeyString\":\"%s\", \"sampleRtKeyInt\":%d, \"sampleRtKeyFloat\":%.3lf}", 
-                                                                        "AvnetKnowsIoT", 
-                                                                        (int)(rand()%100),
-                                                                        ((float)rand()/(float)(RAND_MAX)) * 100);
-    }
-    else{
-                        
-        // The hardware is not initialized, send an error message response
-        snprintf(payloadPtr->payload.telemetryJSON, 128, "{\"error\":\"Real time app could not initialize the hardware\"}"); 
-
-    }
-
-    printf("\n\nSending to A7: %s\n",payloadPtr->payload.telemetryJSON);
-
-    /* Write to the high level application, enqueue to mailbox */
-    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK) + 1);
+    return true;
 }
