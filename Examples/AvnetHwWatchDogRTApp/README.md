@@ -1,6 +1,6 @@
-# Real time application information for AvnetGenericRTExample
+# Real time application information for AvnetHwWatchDogRTApp
 
-# The appliation supports the following Avnet inter-core implementation messages . . .
+## The appliation supports the following Avnet inter-core implementation messages . . .
 
 * IC_WD_SET_INTERVAL 
   * Set the watch dog timeout value <= 64.  If a value > 64 is sent the application will default to 64 seconds.
@@ -46,8 +46,7 @@ To configure a high level DevX application to use this binary ...
          .intercore_recv_block = &ic_control_block_watch_dog,
          .intercore_recv_block_length = sizeof(ic_control_block_watch_dog)};
 
-* Initialize the intercore communications in the init routine
-        dx_intercoreConnect(&intercore_watch_dog_app);
+* Initialize the intercore communications in the init routine ```dx_intercoreConnect(&intercore_watch_dog_app);```
       
 * Add code to configure and start the watch dog
 
@@ -81,8 +80,7 @@ To configure a high level DevX application to use this binary ...
 
         switch (messageData->cmd) {
             case IC_WD_SET_INTERVAL:
-                // Pull the sensor data already in units of Lux
-                    Log_Debug("WD Interval: %d\n", messageData->watchDogInterval);
+                Log_Debug("WD Interval: %d\n", messageData->watchDogInterval);
                 break;
             // Handle the other cases by doing nothing
             case IC_WD_TICKLE_WATCH_DOG:
@@ -110,89 +108,15 @@ To configure a high level DevX application to use this binary ...
 
 * Update the app_manifest.json file with the real time application's ComponentID
 
- `"AllowedApplicationConnections": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ],`
+ `"AllowedApplicationConnections": [ "68d57215-8bf1-4b0b-a0d6-0040fd0b3686" ],`
 
 * Update the launch.vs.json  file with the real time application's ComponentID
 
-`"partnerComponents": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ]`
+`"partnerComponents": [ "68d57215-8bf1-4b0b-a0d6-0040fd0b3686" ]`
 
 * Update the .vscode\launch.json  file with the real time application's ComponentID
 
-`"partnerComponents": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ]`
-
-# Configuring the Avnet Default High Level application to use this example (Avnet Default Sample)
-To configure the high level application to use this binary ...
-
-Include the interface definition in the m4_support.c 4mArray[] definition
-
-    {
-        .m4Name="AvnetGenericRTApp",
-        .m4RtComponentID="9f19b84b-d83c-442b-b8b8-ce095a3b9b33",
-        .m4InitHandler=genericM4Init,
-        .m4Handler=genericM4Handler,
-        .m4CleanupHandler=genericM4Cleanup,
-        .m4TelemetryHandler=genericM4RequestTelemetry,
-        .m4InterfaceVersion=V0
-    }
-   
-* Update the app_manifest.json file with the real time application's ComponentID
-
-`"AllowedApplicationConnections": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ],`
-
-* Update the launch.vs.json  file with the real time application's ComponentID
-
-`"partnerComponents": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ]`
-
-* Update the .vscode\launch.json  file with the real time application's ComponentID
-
-`"partnerComponents": [ "9f19b84b-d83c-442b-b8b8-ce095a3b9b33" ]`
-
-* Include the raw data handler in your high level application in m4_support.c
-
-    /// <summary>
-    ///  referenceRawDataHandler()
-    ///
-    /// This handler is called when the high level application receives a raw data read response from the
-    /// AvnetGenericRT real time application.
-    ///
-    ///  This handler is included as a refeence for your own custom raw data handler.
-    ///
-    /// </summary>
-    void referenceRawDataHandler(void* msg){
-
-        // Define the expected data structure.  Note this struct came from the AvnetGroveGPS real time application code
-        typedef struct
-        {
-            INTER_CORE_CMD cmd;
-            uint32_t sensorSampleRate;
-            uint8_t rawData8bit;
-            float rawDataFloat; 
-        } IC_COMMAND_BLOCK_HW_WD;
-
-        IC_COMMAND_BLOCK_HW_WD *messageData = (IC_COMMAND_BLOCK_HW_WD*) msg;
-        Log_Debug("RX Raw Data: rawData8bit: %d, rawDataFloat: %.2f\n",
-              messageData->rawData8bit, messageData->rawDataFloat);
-
-        // Add message structure and logic to do something with the raw data from the 
-        // real time application
-}
-
-## Application Manifest
-
-Note that high level apps and real time apps may not declare the same resources in their app_manifest.json files.  This real time application uses the following Azure Sphere resources, and is built to connect to the AvnetDefaultProject/HighLevelExampleApp application with ComponentID: 06e116bd-e3af-4bfe-a0cb-f1530b8b91ab.
-
-    {
-        "SchemaVersion": 1,
-        "Name": "AvnetGenericRTExample",
-        "ComponentId": "9f19b84b-d83c-442b-b8b8-ce095a3b9b33",
-        "EntryPoint": "/bin/app",
-        "CmdArgs": [],
-        "Capabilities": {
-            "AllowedApplicationConnections": [ "06e116bd-e3af-4bfe-a0cb-f1530b8b91ab" ]
-        },
-        "ApplicationType": "RealTimeCapable"
-    }
-
+`"partnerComponents": [ "68d57215-8bf1-4b0b-a0d6-0040fd0b3686" ]`
 
 ## Hardware resources claimed by this application
 None
