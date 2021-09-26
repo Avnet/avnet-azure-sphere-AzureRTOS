@@ -61,9 +61,23 @@
 #define DEMO_BYTE_POOL_SIZE 9120
 #define MBOX_BUFFER_LEN_MAX 1044
 
-#define PAY_LOAD_START_OFFSET 20
+// Shared memory details
+#define RESERVED_BYTES_IN_SHARED_MEMORY 4
+#define COMPONENT_ID_LEN_IN_SHARED_MEMORY 16
+#define COMMAND_BLOCK_OFFSET 20
+
+// Define the memory layout of the incomming and outgoing message buffer
+typedef struct __attribute__((packed))
+{
+    UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
+    UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
+    IC_COMMAND_BLOCK_GROVE_GPS payload;
+} IC_SHARED_MEMORY_BLOCK;
+
 static UCHAR mbox_local_buf[MBOX_BUFFER_LEN_MAX];
-char messageHeader[PAY_LOAD_START_OFFSET];
+
+// Local buffer where we process data from/to the high level applicationstatic UCHAR mbox_local_buf[MBOX_BUFFER_LEN_MAX];
+char messageHeader[COMMAND_BLOCK_OFFSET];
 
 #define MAX_NEMA_GPS_DATA_LENGTH 128
 char gpsData[MAX_NEMA_GPS_DATA_LENGTH] = {0};
@@ -92,8 +106,6 @@ static volatile bool hardwareInitOK = false;
     int    nsats;
     double alt_sl;
     char   alt_sl_units[2];
-
-
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {
@@ -429,7 +441,9 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 /* Read from high leval application, dequeue from mailbox */
                 mbox_local_buf_len = MBOX_BUFFER_LEN_MAX;
                 result = DequeueData(outbound, inbound, mbox_shared_buf_size, mbox_local_buf, &mbox_local_buf_len);
-                if (result == -1 || mbox_local_buf_len < PAY_LOAD_START_OFFSET) {
+
+                // Verify we received a new message                
+                if (result == -1 || (mbox_local_buf_len < RESERVED_BYTES_IN_SHARED_MEMORY + COMPONENT_ID_LEN_IN_SHARED_MEMORY)) {
                     printf("Message queue is empty!\n");
                     // Set the flag, we've processed all the messages in the queue
                     queuedMessages = false;
@@ -438,19 +452,18 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                 // Make a local copy of the message header.  This header contains the component ID of the high level
                 // application.  We need to add this header to messages being sent up to the high level application.
-                for(int i = 0; i < PAY_LOAD_START_OFFSET; i++){
+                for(int i = 0; i < COMMAND_BLOCK_OFFSET; i++){
                     messageHeader[i] = mbox_local_buf[i];
                 }
+
+                // Init a pointer to the incomming message, cast it so we can index into the structure
+                IC_SHARED_MEMORY_BLOCK *payloadPtr = (IC_SHARED_MEMORY_BLOCK*)mbox_local_buf;
 
                 /* Print the received message.*/
                 mbox_print(mbox_local_buf, mbox_local_buf_len);
 
-                // Cast the incomming message so we can index into it with our structure.  Note that
-                // the data befrore PAY_LOAD_START_OFFSET is required when we send a response, so keep it intact
-                IC_COMMAND_BLOCK_GROVE_GPS *commandMsg = (IC_COMMAND_BLOCK_GROVE_GPS*) &mbox_local_buf[PAY_LOAD_START_OFFSET];
-
                 /* Process the command from the high level Application */
-                switch (commandMsg->cmd)
+                switch (payloadPtr->payload.cmd)
                 {
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry.  Send up random
@@ -464,17 +477,17 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // a new sample rate for automatically sending telemetry data.
                     case IC_SET_SAMPLE_RATE:
 
-                        printf("Set the real time application sample rate set to %lu seconds\n", commandMsg->sensorSampleRate);
+                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtr->payload.sensorSampleRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        send_telemetry_thread_period = commandMsg->sensorSampleRate;
+                        send_telemetry_thread_period = payloadPtr->payload.sensorSampleRate;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_GROVE_GPS)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
 
                     // If the real time application sends this command, then the high level application is requesting
@@ -485,27 +498,27 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         tx_semaphore_get(&gpsDataSemaphore, TX_WAIT_FOREVER);   
 
                         // Fill in the struct with the raw data
-                        commandMsg->fix_qual = fix_qual;
-                        commandMsg->lat = lat;
-                        commandMsg->lon = lon;
-                        commandMsg->numsats = nsats;
-                        commandMsg->alt = alt_sl;
+                        payloadPtr->payload.fix_qual = fix_qual;
+                        payloadPtr->payload.lat = lat;
+                        payloadPtr->payload.lon = lon;
+                        payloadPtr->payload.numsats = nsats;
+                        payloadPtr->payload.alt = alt_sl;
 
                         // Release the semaphore.
                         tx_semaphore_put(&gpsDataSemaphore);
 
                         printf("TX Raw Data: fix_qual: %d, numstats: %d, lat: %lf, lon: %lf, alt: %.2f\n",
-                                commandMsg->fix_qual, commandMsg->numsats, commandMsg->lat, commandMsg->lon, commandMsg->alt);
+                                payloadPtr->payload.fix_qual, payloadPtr->payload.numsats, payloadPtr->payload.lat, payloadPtr->payload.lon, payloadPtr->payload.alt);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the IC_READ_SENSOR command
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+sizeof(IC_COMMAND_BLOCK_GROVE_GPS)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
 
                     case IC_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
                     case IC_UNKNOWN:
                     default:
@@ -626,15 +639,15 @@ void mbox_print(u8 *mbox_buf, u32 mbox_data_len)
         mbox_buf[19], mbox_buf[18], mbox_buf[17], mbox_buf[16]);
 
     /* Print message as hex. */
-    payload_len = mbox_data_len - PAY_LOAD_START_OFFSET;
+    payload_len = mbox_data_len - COMMAND_BLOCK_OFFSET;
     printf("  Payload (%d bytes as hex): ", payload_len);
-    for (i = PAY_LOAD_START_OFFSET; i < mbox_data_len; ++i)
+    for (i = COMMAND_BLOCK_OFFSET; i < mbox_data_len; ++i)
         printf("0x%02X ", mbox_buf[i]);
     printf("\n");
 
     /* Print message as text. */
     printf("  Payload (%d bytes as text): ", payload_len);
-    for (i = PAY_LOAD_START_OFFSET; i < mbox_data_len; ++i)
+    for (i = COMMAND_BLOCK_OFFSET; i < mbox_data_len; ++i)
         printf("%c", mbox_buf[i]);
     printf("\n");
 }
@@ -652,32 +665,30 @@ bool initialize_hardware(void) {
 
 void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size){
     
-    int responseLen = 0;
+    // Init a pointer to the incomming message, cast it so we can index into the structure
+    IC_SHARED_MEMORY_BLOCK *payloadPtr = (IC_SHARED_MEMORY_BLOCK*)mbox_local_buf;
+
+    // Copy the header from the incomming message to the message going up.
+    for(int i = 0; i < COMMAND_BLOCK_OFFSET; i++){
+        mbox_local_buf[i] = messageHeader[i];
+    }
+
+    // Set the response message ID
+    payloadPtr->payload.cmd = IC_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
         
-        // Copy the header from the incomming message to the message going up.
-        for(int i = 0; i < PAY_LOAD_START_OFFSET; i++){
-            mbox_local_buf[i] = messageHeader[i];
-        }
-        
-        // Set the response message ID
-        mbox_local_buf[PAY_LOAD_START_OFFSET] = IC_READ_SENSOR_RESPOND_WITH_TELEMETRY;
-
         // Construct the telemetry JSON that will be passed to the IoTHub. 
-
-
         // Get the semaphore with suspension before using the global GPS data
         tx_semaphore_get(&gpsDataSemaphore, TX_WAIT_FOREVER);   
 
         static const char gps_telemetry_string[] = "{\"numSats\":%d,\"fixQuality\":%d,\"Tracking\":{\"lat\":%f,\"lon\":%f,\"alt\":%.2f}}";
-
-        responseLen = snprintf((char*)&mbox_local_buf[PAY_LOAD_START_OFFSET+1], 128, gps_telemetry_string, 
-                                                                                    nsats, 
-                                                                                    fix_qual,
-                                                                                    lat,
-                                                                                    lon,
-                                                                                    alt_sl);
+        snprintf(payloadPtr->payload.telemetryJSON, 128, gps_telemetry_string, 
+                                                         nsats, 
+                                                         fix_qual,
+                                                         lat,
+                                                         lon,
+                                                         alt_sl);
 
         // Release the semaphore.
         tx_semaphore_put(&gpsDataSemaphore);
@@ -686,13 +697,13 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     else{
                         
         // The hardware is not initialized, send an error message response
-        responseLen = snprintf((char*)&mbox_local_buf[PAY_LOAD_START_OFFSET+1], 128, "{\"error\":\"Real time app could not initialize the hardware\"}"); 
+        snprintf(payloadPtr->payload.telemetryJSON, 128, "{\"error\":\"Real time app could not initialize the hardware\"}"); 
 
     }
 
-    printf("\n\nSending to A7: %s\n",&mbox_local_buf[PAY_LOAD_START_OFFSET+1]);
+    printf("\n\nSending to A7: %s\n",&mbox_local_buf[COMMAND_BLOCK_OFFSET+1]);
 
     /* Write to the high level application, enqueue to mailbox */
-    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, PAY_LOAD_START_OFFSET + responseLen + 1);
+    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK) + 1);
 
 }

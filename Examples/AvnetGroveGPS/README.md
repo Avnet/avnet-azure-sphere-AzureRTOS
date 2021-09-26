@@ -64,23 +64,29 @@ To configure a high level DevX application to use this binary ...
       static void grove_receive_msg_handler(void *data_block, ssize_t message_length)
       {
 
-        // Cast the data block so we can index into the data
-        IC_COMMAND_BLOCK_GROVE_GPS *messageData = (IC_COMMAND_BLOCK_GROVE_GPS*) data_block;
+          // Cast the data block so we can index into the data
+          IC_COMMAND_BLOCK_GROVE_GPS *messageData = (IC_COMMAND_BLOCK_GROVE_GPS*) data_block;
 
-       switch (messageData->cmd) {
-           case IC_READ_SENSOR:
-               Log_Debug("RX Raw Data: fix_qual: %d, numstats: %d, lat: %lf, lon: %lf, alt: %.2f\n",
-                            messageData->fix_qual, messageData->numsats, messageData->lat, messageData->lon, messageData->alt);
-               break;
-           // Handle the other cases by doing nothing`
-           case IC_UNKNOWN:
-           case IC_HEARTBEAT:
-           case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-           case IC_SET_SAMPLE_RATE:
-               break;
-           default:
-               break;
-           }      
+          switch (messageData->cmd) {
+              case IC_READ_SENSOR:
+                  Log_Debug("RX Raw Data: fix_qual: %d, numstats: %d, lat: %lf, lon: %lf, alt: %.2f\n",
+                          messageData->fix_qual, messageData->numsats, messageData->lat, messageData->lon, messageData->alt);
+                  break;
+              // Handle the other cases by doing nothing
+              case IC_HEARTBEAT:
+                  Log_Debug("IC_HEARTBEAT\n");
+                  break;
+              case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                  Log_Debug("IC_READ_SENSOR_RESPOND_WITH_TELEMETRY\n");
+                  Log_Debug("%s\n", messageData->telemetryJSON);
+                  break;
+              case IC_SET_SAMPLE_RATE:
+                  Log_Debug("IC_SET_SAMPLE_RATE\n");
+                  break;
+              case IC_UNKNOWN:
+              default:
+                  break;
+          }      
       }
 
 * Add code to read the sensor in your application

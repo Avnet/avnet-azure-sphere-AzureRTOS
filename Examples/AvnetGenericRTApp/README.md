@@ -62,26 +62,31 @@ To configure a high level DevX application to use this binary ...
       static void generic_receive_msg_handler(void *data_block, ssize_t message_length)
       {
 
-        // Cast the data block so we can index into the data
-        IC_COMMAND_BLOCK_GENERIC_RT_APP *messageData = (IC_COMMAND_BLOCK_GENERIC_RT_APP*) data_block;
+              // Cast the data block so we can index into the data
+              IC_COMMAND_BLOCK_GENERIC_RT_APP *messageData = (IC_COMMAND_BLOCK_GENERIC_RT_APP*) data_block;
 
-       switch (messageData->cmd) {
-           case IC_READ_SENSOR:
-               // Pull the data
-               Log_Debug("RX: %d\n", messageData->rawData8bit);
-               Log_Debug("RX: %.2f\n", messageData->rawDataFloat);
-               break;
-           // Handle the other cases by doing nothing`
-           case IC_UNKNOWN:
-           case IC_HEARTBEAT:
-           case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-           case IC_SET_SAMPLE_RATE:
-               break;
-           default:
-               break;
-           }
+      switch (messageData->cmd) {
+          case IC_READ_SENSOR:
+              // Pull the sensor data already in units of Lux
+                    Log_Debug("RX: %d\n", messageData->rawData8bit);
+                    Log_Debug("RX: %.2f\n", messageData->rawDataFloat);
+              break;
+          // Handle the other cases by doing nothing
+          case IC_HEARTBEAT:
+              Log_Debug("IC_HEARTBEAT\n");
+              break;
+          case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+              Log_Debug("IC_READ_SENSOR_RESPOND_WITH_TELEMETRY\n");
+              Log_Debug("%s\n", messageData->telemetryJSON);
+              break;
+          case IC_SET_SAMPLE_RATE:
+              Log_Debug("IC_SET_SAMPLE_RATE\n");
+              break;
+          case IC_UNKNOWN:
+          default:
+              break;
+          }
       }
-
 * Add code to read the sensor in your application
 
           // send read sensor message to realtime core app one

@@ -23,4 +23,5 @@ typedef struct __attribute__((packed))
     int fix_qual;
 	int numsats;
     float alt;
+	char telemetryJSON[256];
 } IC_COMMAND_BLOCK_GROVE_GPS;

@@ -19,4 +19,5 @@ typedef struct __attribute__((packed))
 	uint32_t sensorSampleRate;
 	uint8_t rawData8bit;
 	float rawDataFloat;
+	char telemetryJSON[128];
 } IC_COMMAND_BLOCK_GENERIC_RT_APP;
