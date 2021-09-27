@@ -1,17 +1,17 @@
-# Real time application information for AvnetAlsPt19RTApp
+# Real time application information for AvnetLps22hhRTApp
 
-The Avnet ALS-PT19 AzureRTOS real time application reads adc data from the Avnet Starter Kit's on-board ALS-PT19 light sensor and passes 
-sernsor data and/or telemetry data to the high level application over the inter-core communications path.
+The Avnet LPS22HH AzureRTOS real time application reads i2c data from the Avnet Starter Kit's on-board LPS22HH pressure sensor and passes 
+sensor data and/or telemetry data to the high level application over the inter-core communications path.
 
 # The appliation supports the following Avnet inter-core implementation messages . . .
 
 * IC_HEARTBEAT 
   * The application echos back the IC_HEARTBEAT response
 * IC_READ_SENSOR
-  * The application returns the adc voltage read from the device in the lightSensorAdcData response data field
+  * The application returns the pressure read from the device in the pressure response data field
 * IC_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-  * The application reads the light sensor, converts the raw data to units of LUX and returns properly formatted JSON
-  * {"light_intensity": 1234.56} 
+  * The application reads the pressure sensor, returns properly formatted JSON
+  * {"pressure": 1234.56} 
 * IC_SET_SAMPLE_RATE
 * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
 
@@ -19,66 +19,61 @@ sernsor data and/or telemetry data to the high level application over the inter-
 This application binary can be side loaded onto your device with the following commands . . .
 
 * `azsphere device enable-development`
-* `azsphere device sideload deploy --image-package ./AvnetAlsPt19TRApp.imagepackage`
+* `azsphere device sideload deploy --image-package ./AvnetLPS22HHRTApp.imagepackage`
 
 # Configuring the Avnet Default High Level application to use this example (DevX)
 To configure a high level DevX application to use this binary ...
 
-* Copy als_pt19_light_sensor.h from the example repo into your project directory
+* Copy lps22hh_rtapp.h from the example repo into your project directory
 
 * Include the header files in main.c
   * `#include "dx_intercore.h"`
-  * `#include "als_pt19_light_sensor.h"`
+  * `#include "lps22hh_rtapp.h"`
 
 * Add handler function definition to the Forward declarations section in main.c
-  * `static void alsPt19_receive_msg_handler(void *data_block, ssize_t message_length);`
+  * `static void lps22hh_receive_msg_handler(void *data_block, ssize_t message_length);`
 
 * Add the binding to main.c
 
       /****************************************************************************************
       * Inter Core Bindings
       *****************************************************************************************/
-      IC_COMMAND_BLOCK_ALS_PT19 ic_control_block_alsPt19_light_sensor = {.cmd = IC_READ_SENSOR,
-                                                                         .lightSensorLuxData = 0.0,
-                                                                         .sensorData = 0,
+      IC_COMMAND_BLOCK_LPS22HH ic_control_block_lps22hh_pressure_sensor = {.cmd = IC_READ_SENSOR,
+                                                                         .pressure = 0.0,
                                                                          .sensorSampleRate = 0};
 
-      DX_INTERCORE_BINDING intercore_alsPt19_light_sensor = {
+      DX_INTERCORE_BINDING intercore_lps22hh_light_sensor = {
        .sockFd = -1,
        .nonblocking_io = true,
-       .rtAppComponentId = "b2cec904-1c60-411b-8f62-5ffe9684b8ce",
-       .interCoreCallback = alsPt19_receive_msg_handler,
-       .intercore_recv_block = &ic_control_block_alsPt19_light_sensor,
-       .intercore_recv_block_length = sizeof(ic_control_block_alsPt19_light_sensor)};
+       .rtAppComponentId = "f7ffd0a0-48d7-4b29-926f-ef1ef2d126a6",
+       .interCoreCallback = lps22hh_receive_msg_handler,
+       .intercore_recv_block = &iic_control_block_lps22hh_pressure_sensor,
+       .intercore_recv_block_length = sizeof(ic_control_block_lps22hh_pressure_sensor)};
 
 * Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
-      dx_intercoreConnect(&intercore_alsPt19_light_sensor);
+      dx_intercoreConnect(&intercore_lps22hh_light_sensor);
 
 * Include the handler to process interCore responses
       o
       /// <summary>
-      /// alsPt19_receive_msg_handler()
+      /// lps22hh_receive_msg_handler()
       /// This handler is called when the high level application receives a raw data read response from the 
-      /// AvnetAls-PT19 real time application.
+      /// Avnet LPS22hh real time application.
       /// </summary>
-      static void alsPt19_receive_msg_handler(void *data_block, ssize_t message_length)
+      static void lps22hh_receive_msg_handler(void *data_block, ssize_t message_length)
       {
 
-      uint32_t light_sensor_adc_data = 0;
-      float light_sensor = 0.0;
+      float pressure = 0.0;
 
       // Cast the data block so we can index into the data
-      IC_COMMAND_BLOCK_ALS_PT19 *messageData = (IC_COMMAND_BLOCK_ALS_PT19*) data_block;
+      IC_COMMAND_BLOCK_LPS22HH *messageData = (IC_COMMAND_BLOCK_LPS22HH*) data_block;
 
       switch (messageData->cmd) {
           case IC_READ_SENSOR:
               // Pull the sensor data already in units of Lux
-              light_sensor = (float)messageData->lightSensorLuxData;
-              light_sensor_adc_data = (uint32_t)messageData->sensorData;
+              pressure = (float)messageData->pressure;
 
-              Log_Debug("IC_READ_SENSOR:          lux - %.2f Lux\n", light_sensor);
-              Log_Debug("IC_READ_SENSOR: ADC Raw Data - %d adc raw deta\n", light_sensor_adc_data);
-
+              Log_Debug("IC_READ_SENSOR: pressure - %.2f\n", pressue);
               break;
           // Handle the other cases by doing nothing
           case IC_HEARTBEAT:
@@ -100,109 +95,28 @@ To configure a high level DevX application to use this binary ...
 * Add code to read the sensor in your application
 
       // Send read sensor message to realtime core app one
-      ic_control_block_alsPt19_light_sensor.cmd = IC_READ_SENSOR;
-      dx_intercorePublish(&intercore_alsPt19_light_sensor, &ic_control_block_alsPt19_light_sensor,
-                            sizeof(IC_COMMAND_BLOCK_ALS_PT19));
+      ic_control_block_lps22hh_light_sensor.cmd = IC_READ_SENSOR;
+      dx_intercorePublish(&intercore_lps22hh_light_sensor, &ic_control_block_lps22hh_pressure_sensor,
+                            sizeof(IC_COMMAND_BLOCK_LPS22HH));
 
 * Update the app_manifest.json file with the real time application's ComponentID
 
- `"AllowedApplicationConnections": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ],`
+ `"AllowedApplicationConnections": [ "f7ffd0a0-48d7-4b29-926f-ef1ef2d126a6" ],`
 
 * Update the launch.vs.json  file with the real time application's ComponentID
 
-`"partnerComponents": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ]`
+`"partnerComponents": [ "f7ffd0a0-48d7-4b29-926f-ef1ef2d126a6" ]`
 
 * Update the .vscode\launch.json  file with the real time application's ComponentID
 
-`"partnerComponents": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ]`
-
-# Configuring the Avnet Default High Level application to use this example (Avnet Default Sample)
-To configure the high level application to use this binary ...
-
-* Add the function definition to m4_support.h
-
-`void alsPt19RawDataHandler(void*);`
-
-Include the interface definition in the m4_support.c 4mArray[] definition
-
-    // The Avnet Light Sensor application reads the ALS-PT19 light sensor on the Avnet Starter Kit
-    {
-          .m4Name="AvnetLightSensor",
-          .m4RtComponentID="b2cec904-1c60-411b-8f62-5ffe9684b8ce", 
-          .m4InitHandler=genericM4Init,
-          .m4rawDataHandler=alsPt19RawDataHandler,
-          .m4Handler=genericM4Handler,
-          .m4CleanupHandler=genericM4Cleanup,
-          .m4TelemetryHandler=genericM4RequestTelemetry,
-          .m4InterfaceVersion=V0
-    },
-   
-* Update the app_manifest.json file with the real time application's ComponentID
-
-`"AllowedApplicationConnections": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ],`
-
-* Update the launch.vs.json  file with the real time application's ComponentID
-
-`"partnerComponents": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ]`
-
-* Update the .vscode\launch.json  file with the real time application's ComponentID
-
-`"partnerComponents": [ "b2cec904-1c60-411b-8f62-5ffe9684b8ce" ]`
-
-* Include the raw data handler in your high level application in m4_support.c
-
-      /// <summary>
-      ///  referenceRawDataHandler()
-      /// 
-      /// This handler is called when the high level application receives a raw data read response from the 
-      /// AvnetGenericRT real time application.
-      ///
-      ///  This handler is included as a refeence for your own custom raw data handler.
-      ///
-      /// </summary>
-      void alsPt19RawDataHandler(void* msg){
-
-        // Define the expected data structure.  Note this struct came from the AvnetGroveGPS real time application code
-        typedef struct
-        {
-            INTER_CORE_CMD cmd;
-            uint32_t sensorSampleRate;
-            uint32_t sensorData;
-            double lightSensorLuxData;
-        } IC_COMMAND_BLOCK_ALS_PT19;
-
-        uint32_t rawSensorData = messageData->sensorData;
-        Log_Debug("Sensor data: %d\n", rawSensorData);
-  	    
-        light_sensor = messageData->lightSensorLuxData;   
-        Log_Debug("RX Lux data: %.2f\n", light_sensor);
-
-        // Add message structure and logic to do something with the raw data from the 
-        // real time application
-      }
-
-## Application Manifest
-Note that high level apps and real time apps may not declare the same resources in their app_manifest.json files.  This real time application uses the following Azure Sphere resources, and is built to connect to the AvnetDefaultProject/HighLevelExampleApp application with ComponentID: 06e116bd-e3af-4bfe-a0cb-f1530b8b91ab.
-
-    {
-        "SchemaVersion": 1,
-        "Name": "Avnet-Als-PT19-RTApp",
-        "ComponentId": "b2cec904-1c60-411b-8f62-5ffe9684b8ce",
-        "EntryPoint": "/bin/app",
-        "CmdArgs": [],
-        "Capabilities": {
-            "Adc": [ "ADC-CONTROLLER-0" ],
-            "AllowedApplicationConnections": [ "06e116bd-e3af-4bfe-a0cb-f1530b8b91ab" ]
-        },
-        "ApplicationType": "RealTimeCapable"
-    }
+`"partnerComponents": [ "f7ffd0a0-48d7-4b29-926f-ef1ef2d126a6" ]`
 
 ## Hardware resources claimed by this application
 Note that using/declaring the ADC controller in the app_manifest.json file will also lock the following MT3620 resources to the real time application.  See the [I/O Peripherals table](https://docs.microsoft.com/en-us/azure-sphere/hardware/mt3620-product-status#io-peripherals) for details on how the MT3620 maps hardware pins to blocks.
 
-Mapped to the ADC-CONTROLOLER-0 Hardware Block
+Mapped to the ISU1 Hardware Block
 * All ADC functions
-* GPIO41 - GPIO48
+* GPIO46 - GPIO50
 
 ## Serial Debug
 By default the application opens the M4 debug port and sends debug data over that connection
