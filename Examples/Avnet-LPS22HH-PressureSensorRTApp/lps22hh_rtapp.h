@@ -19,8 +19,7 @@ typedef struct  __attribute__((packed))
 {
     INTER_CORE_CMD cmd;
     uint32_t sensorSampleRate;
-    uint32_t sensorData;
-    double lightSensorLuxData;
+    float pressure;
     char telemetryJSON[64];
-} IC_COMMAND_BLOCK_ALS_PT19;
+} IC_COMMAND_BLOCK_LPS22HH;
 

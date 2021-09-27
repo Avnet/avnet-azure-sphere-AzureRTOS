@@ -42,21 +42,14 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "os_hal_adc.h"
-#include "als_pt19_light_sensor.h"
- 
+#include "lps22hh_rtapp.h"
+#include "./IMU_lib/imu_temp_pressure.h"
 
-#define ADC_GPIO                41            /* ADC0 = GPIO41 */
-#define ADC_DATA_MASK           (BITS(4, 15))  /* ADC sample data mask (bit_4 ~ bit_15) */
-#define ADC_DATA_BIT_OFFSET     4            /* ADC sample data bit offset */
-
-// One Shot Mode: ADC0 is configured to capture ADC data.
-#define BIT_MAP                     0x1 /* ADC0 */
-#define CHANNEL_NUM                 1   /* ADC0 */
+// 1 tick = 10ms. It is configurable.
+#define MS_TO_TICK(ms)  ((ms) * (TX_TIMER_TICKS_PER_SECOND) / 1000)
 
 // Define global variables
-struct adc_fsm_param adc_fsm_parameter;
-UINT adc_rx_buf_one_shot_mode[CHANNEL_NUM];
+static float pressure = 0.0F;
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -76,7 +69,7 @@ typedef struct __attribute__((packed))
 {
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_ALS_PT19 payload; // Pointer to the message data from/to the high level application
+    IC_COMMAND_BLOCK_LPS22HH payload; // Pointer to the message data from/to the high level application
 } IC_SHARED_MEMORY_BLOCK;
 
 
@@ -107,8 +100,8 @@ enum triggers {
     PERIODIC_TELEMETRY = 1
 };
 
-// Define a variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK_ALS_PT19 ic_control_block;
+// Define a structure/variable to use when processing/responding to high level appliation messages
+IC_COMMAND_BLOCK_LPS22HH ic_control_block;
 
 /* Define Semaphores */
 
@@ -141,7 +134,6 @@ void mbox_swint_cb(struct mtk_os_hal_mbox_cb_data *data);
 void mbox_print(UCHAR *mbox_buf, UINT mbox_data_len);
 bool initialize_hardware(void);
 void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size);
-u32 adcRead(void);
 
 /* Define main entry point.  */
 void tx_main(void)
@@ -206,7 +198,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS ALS-PT19 V2 Light Sensor application ****\n");
+    printf("\n\n**** Avnet AzureRTOS LPS22HH V1 Pressure Sensor application ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -332,13 +324,9 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
                     case IC_READ_SENSOR:
 
-                        // Read the light sensor data and copy it into the response buffer
-                        payloadPtr->payload.sensorData = adcRead();
-                        printf("RealTime App sending sensor reading 32-bit: %lu\n", payloadPtr->payload.sensorData);
-
-                        // Read the light sensor data and copy it into the response buffer
-                        payloadPtr->payload.lightSensorLuxData = (float)(payloadPtr->payload.sensorData*2.5/4095)*1000000 / (float)(3650*0.1428);
-                        printf("RealTime App sending LUX data: %.2f\n", payloadPtr->payload.lightSensorLuxData);
+                        // Read the pressure sensor and copy it into the response buffer
+                        payloadPtr->payload.pressure = lp_get_pressure();
+                        printf("RealTime App sending sensor reading %.2f\n", payloadPtr->payload.pressure);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
@@ -497,21 +485,12 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     payloadPtr->payload.cmd = IC_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
-
-        // Read the light sensor and calculate Lux
-	    //
-        // get voltage (2.5*adc_reading/4096)
-	    // divide by 3650 (3.65 kohm) to get current (A)
-	    // multiply by 1000000 to get uA
-	    // divide by 0.1428 to get Lux (based on fluorescent light Fig. 1 datasheet)
-	    // divide by 0.5 to get Lux (based on incandescent light Fig. 1 datasheet)
-	    // We can simplify the factors, but for demostration purpose it's OK
-	    
-        float light_sensor = (float)(adcRead()*2.5/4095)*1000000 / (float)(3650*0.1428);        
-        //printf("ALSPT19: Ambient Light[Lux] : %.2f\r\n", light_sensor);
+        
+        pressure = lp_get_pressure();
+        printf("LPS22HH: Pressure : %.2f\r\n", pressure);
 
         // Construct the telemetry response
-        snprintf(payloadPtr->payload.telemetryJSON, 128,  "{\"light_intensity\": %.2f}",light_sensor);
+        snprintf(payloadPtr->payload.telemetryJSON, 128,  "{\"pressure\": %.2f}",pressure);
     }
     else{
                         
@@ -528,44 +507,21 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 // Update this routine to initialize any hardware interfaces required by your implementation
 bool initialize_hardware(void) {
 
-    INT ret = mtk_os_hal_adc_ctlr_init();
-    if (ret) {
-        printf("Func:%s, line:%d fail\r\n", __func__, __LINE__);
-        return false;
-    }
+	bool status = (lp_imu_initialize());
+	tx_thread_sleep(MS_TO_TICK(100));
 
-    adc_fsm_parameter.pmode = ADC_PMODE_ONE_TIME;
-    adc_fsm_parameter.channel_map = BIT_MAP;
-    adc_fsm_parameter.fifo_mode = ADC_FIFO_DIRECT;
-    adc_fsm_parameter.ier_mode = ADC_FIFO_IER_RXFULL;
-    adc_fsm_parameter.vfifo_addr = adc_rx_buf_one_shot_mode;
-    adc_fsm_parameter.vfifo_len = CHANNEL_NUM;
-    adc_fsm_parameter.rx_callback_func = NULL;
-    adc_fsm_parameter.rx_callback_data = NULL;
-    adc_fsm_parameter.rx_period_len = CHANNEL_NUM;
-    
-    ret = mtk_os_hal_adc_fsm_param_set(&adc_fsm_parameter);
-    if (ret) {
-        printf("Func:%s, line:%d fail\r\n", __func__, __LINE__);
-        return false;
-    }
+	if (status) {
+		// Prime the temperature and humidity sensors
+		// Observed the first few readings on startup may return NaN
+		for (size_t i = 0; i < 6; i++) {
+			if (!isnan(lp_get_temperature_lps22h()) && !isnan(lp_get_pressure())) {
+				break;
+			}
+			tx_thread_sleep(MS_TO_TICK(100));
+		}
+        pressure = lp_get_pressure();
 
-    return true;
-}
+	}
 
-u32 adcRead(void)
-{
-    INT ret = 0;
-
-    // printf("\nADC One Shot Mode:\n");
-
-    ret = mtk_os_hal_adc_trigger_one_shot_once();
-    if (ret) {
-        printf("Func:%s, line:%d fail\r\n", __func__, __LINE__);
-        return UINT32_MAX;
-    }
-    
-    u32 rawData = (u32)((adc_rx_buf_one_shot_mode[0] & ADC_DATA_MASK) >> ADC_DATA_BIT_OFFSET);
-    
-    return rawData;
+return status;
 }

@@ -1,11 +1,11 @@
 {
   "SchemaVersion": 1,
-  "Name": "Avnet-Als-PT19-RTAppV2",
-  "ComponentId": "b2cec904-1c60-411b-8f62-5ffe9684b8ce",
+  "Name": "AvnetLPS22HH-V1",
+  "ComponentId": "f7ffd0a0-48d7-4b29-926f-ef1ef2d126a6",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {
-    "Adc": [ "ADC-CONTROLLER-0" ],
+    "I2cMaster": [ "ISU2" ],
     "AllowedApplicationConnections": [ "06e116bd-e3af-4bfe-a0cb-f1530b8b91ab" ]
   },
   "ApplicationType": "RealTimeCapable"
