@@ -13,3 +13,6 @@
 [submodule "Examples/AvnetHwWatchDogRTApp/threadx"]
 	path = Examples/AvnetHwWatchDogRTApp/threadx
 	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/Avnet-LPS22HH-PressureSensorRTApp/threadx"]
+	path = Examples/Avnet-LPS22HH-PressureSensorRTApp/threadx
+	url = https://github.com/azure-rtos/threadx

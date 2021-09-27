@@ -9,8 +9,5 @@
         "CMAKE_TOOLCHAIN_FILE": "${command:azuresphere.AzureSphereSdkDir}/CMakeFiles/AzureSphereRTCoreToolchain.cmake",
         "ARM_GNU_PATH": "${command:azuresphere.ArmGnuPath}"
     },
-    "git.ignoreLimitWarning": true,
-    "files.associations": {
-        "os_hal_wdt.h": "c"
-    }
+    "git.ignoreLimitWarning": true
 }
