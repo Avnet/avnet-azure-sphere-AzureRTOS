@@ -14,6 +14,8 @@ Example application that generates random data.  Can be used as a starter projec
 Reads a GROVE GPS UART device
 ## AvnetHwWatchDogRTApp (9/26/21)
 Implements hardware watch dog on M4 Core
+## Avnet LPS22HH Pressure Sensor (9/29/21)
+Reads the Avnet Starter Kit LPS22HH I2C sensor 
 
 ## Instructions for adding a new example to this repo
 1. Clone the repo to the local drive ```git clone --recurse-submodules https://github.com/Avnet/avnet-azure-sphere-AzureRTOS.git <target directory>```
