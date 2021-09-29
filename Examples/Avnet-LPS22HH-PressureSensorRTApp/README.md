@@ -54,21 +54,21 @@ To configure a high level DevX application to use this binary ...
       dx_intercoreConnect(&intercore_lps22hh_light_sensor);
 
 * Include the handler to process interCore responses
-      o
-      /// <summary>
-      /// lps22hh_receive_msg_handler()
-      /// This handler is called when the high level application receives a raw data read response from the 
-      /// Avnet LPS22hh real time application.
-      /// </summary>
-      static void lps22hh_receive_msg_handler(void *data_block, ssize_t message_length)
-      {
+      
+       /// <summary>
+       /// lps22hh_receive_msg_handler()
+       /// This handler is called when the high level application receives a raw data read response from the 
+       /// Avnet LPS22hh real time application.
+       /// </summary>
+       static void lps22hh_receive_msg_handler(void *data_block, ssize_t message_length)
+       {
 
-      float pressure = 0.0;
+       float pressure = 0.0;
 
-      // Cast the data block so we can index into the data
-      IC_COMMAND_BLOCK_LPS22HH *messageData = (IC_COMMAND_BLOCK_LPS22HH*) data_block;
+       // Cast the data block so we can index into the data
+       IC_COMMAND_BLOCK_LPS22HH *messageData = (IC_COMMAND_BLOCK_LPS22HH*) data_block;
 
-      switch (messageData->cmd) {
+       switch (messageData->cmd) {
           case IC_READ_SENSOR:
               // Pull the sensor data already in units of Lux
               pressure = (float)messageData->pressure;
@@ -90,7 +90,7 @@ To configure a high level DevX application to use this binary ...
           default:
               break;
           }
-      }
+       }
 
 * Add code to read the sensor in your application
 
@@ -115,7 +115,6 @@ To configure a high level DevX application to use this binary ...
 Note that using/declaring the ADC controller in the app_manifest.json file will also lock the following MT3620 resources to the real time application.  See the [I/O Peripherals table](https://docs.microsoft.com/en-us/azure-sphere/hardware/mt3620-product-status#io-peripherals) for details on how the MT3620 maps hardware pins to blocks.
 
 Mapped to the ISU1 Hardware Block
-* All ADC functions
 * GPIO46 - GPIO50
 
 ## Serial Debug
