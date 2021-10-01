@@ -61,6 +61,9 @@
 #define COMPONENT_ID_LEN_IN_SHARED_MEMORY 16
 #define COMMAND_BLOCK_OFFSET 20
 
+#define COLOR_YELLOW        "\033[1;33m"
+#define COLOR_NONE          "\033[m"
+
 // Define the memory layout of the incomming and outgoing message buffer
 typedef struct __attribute__((packed))
 {
@@ -76,6 +79,9 @@ char messageHeader[COMMAND_BLOCK_OFFSET];
 
 /* Bitmap for IRQ enable. bit_0 and bit_1 are used to communicate with HL_APP */
 static const UINT mbox_irq_status = 0x3;
+
+/* Define WDT callback prototype */
+void wdt_irq_handle(void *unused);
 
 // Global variable to hold the current watchdog timeout value
 static UINT watchDogTimoutSeconds = MAX_WD_TIMER_SECONDS;
@@ -434,19 +440,34 @@ void mbox_print(u8 *mbox_buf, u32 mbox_data_len)
 // Update this routine to initialize any hardware interfaces required by your implementation
 bool initialize_hardware(void) {
     
-    // Setup the hardware watchdog
+    enum os_wdt_rst_sta rst_sta;
+    struct os_wdt_int wdt_int = {
+        .wdt_cb_hdl = wdt_irq_handle,
+        .wdt_cb_data = NULL,
+    };
+
+    /* WDT should be be inited before reset status can be obtained. */
     mtk_os_hal_wdt_init();
+    rst_sta = mtk_os_hal_wdt_get_reset_status();
+    printf("Boot reset status = %d("COLOR_YELLOW"%s"COLOR_NONE")\n", rst_sta,
+                    rst_sta == OS_WDT_NONE_RST ? "NONE" :
+                    rst_sta == OS_WDT_SW_RST ? "SW_RST" :
+                    rst_sta == OS_WDT_HW_RST ? "HW_RST" :
+                    "Unknown!");
 
-    // Set the initial timeout
-    mtk_os_hal_wdt_set_timeout(watchDogTimoutSeconds);
-
-    // Setup the interrupt.  By passing in NULL, we'll leverage the default handler
-    // that will reset the system immediately.
-    mtk_os_hal_wdt_register_irq(NULL);
-
-    // Disable the watchdog timer.  We start in a disabled mode and will start the 
-    // timer when the high level application sends the IC_WD_START command.
+    mtk_os_hal_wdt_set_timeout(MAX_WD_TIMER_SECONDS);
+    mtk_os_hal_wdt_register_irq(&wdt_int);
+    mtk_os_hal_wdt_config(OS_WDT_TRIGGER_IRQ);
+    mtk_os_hal_wdt_enable();
+    printf("Watchdog timer is inited as "COLOR_YELLOW"%d"COLOR_NONE" seconds\n", MAX_WD_TIMER_SECONDS);
     mtk_os_hal_wdt_disable();
         
     return true;
+}
+
+void wdt_irq_handle(void *unused)
+{
+    printf("\nWatchdog Timeout !!!!!\n");
+    printf("Trigger WDT HW Reset\n");
+    mtk_os_hal_wdt_hw_reset();
 }

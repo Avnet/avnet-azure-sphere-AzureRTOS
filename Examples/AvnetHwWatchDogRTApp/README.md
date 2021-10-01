@@ -1,5 +1,10 @@
 # Real time application information for AvnetHwWatchDogRTApp
 
+# Important note, please read
+Note that this application is not very useful.  The M4 application is not able to reset the A7 core, which was the intent of this application.  I'll leave the example here for refernce, but I don't think its very useful.
+
+Brian
+
 ## The appliation supports the following Avnet inter-core implementation messages . . .
 
 * IC_WD_SET_INTERVAL 
