@@ -62,4 +62,5 @@ Examples/AvnetGenericRTApp/out/*
 Examples/Avnet-ALS-PT19-LIghtSensor/out/*
 Examples/AvnetHwWatchDogRTApp/out/*
 Examples/Avnet-LPS22HH-PressureSensorRTApp/out/*
-Examples/Avnet-LSM6DS0RTApp/out/*
+Examples/Avnet-LSM6DSO-AccelerometerRTApp/out/*
+
