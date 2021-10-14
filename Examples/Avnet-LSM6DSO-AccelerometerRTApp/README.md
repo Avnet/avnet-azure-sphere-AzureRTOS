@@ -166,7 +166,7 @@ To configure a high level DevX application to use this binary ...
 `"partnerComponents": [ "<Enter high level application ComponentID>" ]`
 
 ## Hardware resources claimed by this application
-Note that using/declaring the ADC controller in the app_manifest.json file will also lock the following MT3620 resources to the real time application.  See the [I/O Peripherals table](https://docs.microsoft.com/en-us/azure-sphere/hardware/mt3620-product-status#io-peripherals) for details on how the MT3620 maps hardware pins to blocks.
+Note that using/declaring the i2c controller in the app_manifest.json file will also lock the following MT3620 resources to the real time application.  See the [I/O Peripherals table](https://docs.microsoft.com/en-us/azure-sphere/hardware/mt3620-product-status#io-peripherals) for details on how the MT3620 maps hardware pins to blocks.
 
 Mapped to the ISU1 Hardware Block
 * GPIO46 - GPIO50
