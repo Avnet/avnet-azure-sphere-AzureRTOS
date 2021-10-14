@@ -98,7 +98,6 @@ static axis3bit16_t data_raw_angular_rate;
 static axis3bit16_t raw_angular_rate_calibration;
 static AngularRateDegreesPerSecond angularRateDps;
 static AngularRateDegreesPerSecond angularRateDps;
-static AccelerationMilligForce accelerationMilligForce;
 static uint8_t whoamI, rst;
 
 //static uint8_t tx_buffer[1000];
@@ -262,14 +261,14 @@ static void platform_init(void)
 //}
 
 
-AccelerationMilligForce lp_get_acceleration(void)
+bool lp_get_acceleration(AccelerationMilligForce* accelerationMilligForce)
 {
 	uint8_t reg;
 
 	if (!initialized)
 	{
-		accelerationMilligForce.x = accelerationMilligForce.y = accelerationMilligForce.z = NAN;
-		return accelerationMilligForce;
+		accelerationMilligForce->x = accelerationMilligForce->y = accelerationMilligForce->z = NAN;
+		return false;
 	}
 
 	/* Read output only if new xl value is available */
@@ -287,16 +286,17 @@ AccelerationMilligForce lp_get_acceleration(void)
 		//accelerationMilligForce.y = lsm6dso_from_fs4_to_mg(data_raw_acceleration.i16bit[1]);
 		//accelerationMilligForce.z = lsm6dso_from_fs4_to_mg(data_raw_acceleration.i16bit[2]);
 
-		accelerationMilligForce.x = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[0]);
-		accelerationMilligForce.y = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[1]);
-		accelerationMilligForce.z = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[2]);
+		accelerationMilligForce->x = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[0]);
+		accelerationMilligForce->y = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[1]);
+		accelerationMilligForce->z = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[2]);
 
-		//Log_Debug("x %f, y %f, z %f\n", accelerationMilligForce.x, accelerationMilligForce.y, accelerationMilligForce.z);
+		//printf("x %d, y %d, z %d\n", data_raw_acceleration.i16bit[0], data_raw_acceleration.i16bit[1], data_raw_acceleration.i16bit[2]);
+		//printf("x %f, y %f, z %f\n", accelerationMilligForce->x, accelerationMilligForce->y, accelerationMilligForce->z);
+		return true;
 	}
 
-	return accelerationMilligForce;
+	return false;
 }
-
 
 AngularRateDegreesPerSecond lp_get_angular_rate(void)
 {

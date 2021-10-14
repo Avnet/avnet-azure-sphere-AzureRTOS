@@ -42,7 +42,7 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "lsm6ds0_rtapp.h"
+#include "lsm6dso_rtapp.h"
 #include "./IMU_lib/imu_temp_pressure.h"
 
 // 1 tick = 10ms. It is configurable.
@@ -69,9 +69,8 @@ typedef struct __attribute__((packed))
 {
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_LPS22HH payload; // Pointer to the message data from/to the high level application
+    IC_COMMAND_BLOCK_LSM6DSO payload; // Pointer to the message data from/to the high level application
 } IC_SHARED_MEMORY_BLOCK;
-
 
 // Local buffer where we process data from/to the high level application
 static UCHAR mbox_local_buf[MBOX_BUFFER_LEN_MAX];
@@ -91,8 +90,15 @@ static const UINT mbox_irq_status = 0x3;
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
 static UINT send_telemetry_thread_period = 0;
 
+// Variable that defines how often the read sensor thread reads the LSM6DSO accelermonitor sensor
+// The default of 2 says that the thread will read the sensor 2 times a second. 
+static UINT sensor_read_thread_samples_per_second = 2;
+
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
+
+// Variable to hold current acceleration values from LSM6DSO device
+static AccelerationMilligForce acceleration;
 
 // Define the bits used for the telemetry event flag construct
 enum triggers {
@@ -101,18 +107,22 @@ enum triggers {
 };
 
 // Define a structure/variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK_LPS22HH ic_control_block;
+IC_COMMAND_BLOCK_LSM6DSO ic_control_block;
 
 /* Define Semaphores */
 
 // Note: This semaphore is used by the shared memory interface and is required in this implementation
 volatile UCHAR  blockFifoSema;
 
+// This semaphore is used to protect access to the global sensor variable
+TX_SEMAPHORE  lsm6dsoDataSemaphore;
+
 /* Define the ThreadX object control blocks...  */
 
 // Threads
 TX_THREAD               thread_mbox;
 TX_THREAD               thread_set_telemetry_flag;
+TX_THREAD               thread_sensor_read;
 TX_THREAD               tx_hardware_init_thread;
 
 // Application memory pool
@@ -184,7 +194,7 @@ void tx_application_define(void *first_unused_memory)
     tx_byte_allocate(&byte_pool_0, (VOID **) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
 
     /* Create the sensor read thread.  */
-    tx_thread_create(&thread_sensor_read, "set telemetry flag thread", sensor_read_thread_entry, 0,
+    tx_thread_create(&thread_sensor_read, "read sensor thread", sensor_read_thread_entry, 0,
             pointer, APP_STACK_SIZE, 7, 7, TX_NO_TIME_SLICE, TX_AUTO_START);
 
     /* Allocate the stack for the telemetry set flag thread  */
@@ -200,6 +210,9 @@ void tx_application_define(void *first_unused_memory)
     // Create a hardware init thread.
     tx_thread_create(&tx_hardware_init_thread, "hardware init thread", hardware_init_thread, 0,
         pointer, APP_STACK_SIZE, 6, 6, TX_NO_TIME_SLICE, TX_AUTO_START);    
+
+    /* Create the semaphore used make sure we always store/use a complete set of accelerometer data */
+    tx_semaphore_create(&lsm6dsoDataSemaphore, "LSM6DSO Data semaphore", 1); 
 
     // -------------------------------- mailbox channels --------------------------------
 
@@ -299,27 +312,27 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                 /* Print the received message.*/
                 mbox_print(mbox_local_buf, mbox_local_buf_len);
-                
+
                 /* Process the command from the high level Application */
                 switch (payloadPtr->payload.cmd)
                 {
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry.  Send up random
                     // telemetry to exercise the interface.
-                    case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_SET_SAMPLE_RATE:
+                    case IC_LSM6DSO_SET_TELEMETRY_SEND_RATE:
 
-                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtr->payload.sensorSampleRate);
+                        printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtr->payload.sensorSampleRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        send_telemetry_thread_period = payloadPtr->payload.sensorSampleRate;
+                        send_telemetry_thread_period = payloadPtr->payload.telemtrySendRate;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
@@ -328,25 +341,54 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
 
+                    // If the real time application sends this message, then the payload contains
+                    // a new sample rate for reading the sensor.
+                    case IC_LSM6DSO_SET_SENSOR_SAMPLE_RATE:
+
+                        printf("Set the real time application sensor read period to %lu reads/second\n", payloadPtr->payload.sensorSampleRate);
+
+                        // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
+                        // between reading sensors/sending telemetry
+                        sensor_read_thread_samples_per_second = payloadPtr->payload.sensorSampleRate;
+
+                        // Wake up the sensor read thread so that it will start using the new sample rate we just set
+                        tx_thread_wait_abort(&thread_sensor_read);
+
+                        // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
+                        break;
+
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_READ_SENSOR:
+                    case IC_LSM6DSO_READ_SENSOR:
+
+                        // Grab the semaphore before updating the acceleration data structure to make sure we're
+                        // getting a complete set
+                        tx_semaphore_get(&lsm6dsoDataSemaphore, TX_WAIT_FOREVER);   
 
                         // Read the pressure sensor and copy it into the response buffer
-                        payloadPtr->payload.pressure = lp_get_pressure();
-                        printf("RealTime App sending sensor reading %.2f\n", payloadPtr->payload.pressure);
+                        payloadPtr->payload.accelX = acceleration.x;
+                        payloadPtr->payload.accelY = acceleration.y;
+                        payloadPtr->payload.accelZ = acceleration.z;
+
+                        // Release the semaphore
+                        tx_semaphore_put(&lsm6dsoDataSemaphore);   
+
+                        printf("RealTime App sending sensor reading x:%f, y:%f, z%f\n", payloadPtr->payload.accelX, 
+                                                                                        payloadPtr->payload.accelY, 
+                                                                                        payloadPtr->payload.accelZ);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
 
-                    case IC_HEARTBEAT:
+                    case IC_LSM6DSO_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
                         break;
-                    case IC_UNKNOWN:
+                    case IC_LSM6DSO_UNKNOWN:
                     default:
                         break;
                 }
@@ -400,36 +442,32 @@ void set_telemetry_flag_thread_entry(ULONG thread_input)
 // This tread is responsible for reading the sensor.  It reads the sensor and stores the reading into a global variable.
 void sensor_read_thread_entry(ULONG thread_input)
 {
-    ULONG status = TX_SUCCESS;
-    UINT sleep_time_seconds;
+    printf("Read Sensor Task Started\n");
 
-    printf("Set Telemetry Flag Task Started\n");
+    while (true){
 
-    while (1) {
-        
-        // If the period is zero set the period to 1 second so we can keep processing the thread
-        if(send_telemetry_thread_period == 0){
-            sleep_time_seconds = 1;
-        }
-        else{
-            // Else it's not zero, set the sleep time variable, set the flag, and fall through to use the new
-            // sleep period.
-            sleep_time_seconds = send_telemetry_thread_period;
+        if(hardwareInitOK){
 
-            status = tx_event_flags_set(&send_telemetry_event_flags_0, 0x01 << PERIODIC_TELEMETRY, TX_OR);
-            if (status != TX_SUCCESS)
-            {
-                printf("failed to set read sensors event flags\r\n");   
+            // Grab the semaphore before updating the acceleration data structure
+            tx_semaphore_get(&lsm6dsoDataSemaphore, TX_WAIT_FOREVER);   
+
+            // Read the sensor, if it's not ready this call returns false        
+            if(lp_get_acceleration(&acceleration)){
+                printf("%f, %f, %f\n", acceleration.x, acceleration.y, acceleration.z);
             }
-            printf("\n\nSend Telemetry()\n");
+            else{
+                printf("Call to lp_get_acceleration() failed\n");
+            }
+            
+            // Release the semaphore
+            tx_semaphore_put(&lsm6dsoDataSemaphore);
 
         }
-            
+   
         // Sleep the specified time
-        tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND * sleep_time_seconds);
+        tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND/sensor_read_thread_samples_per_second);
     }
 }
-
 
 // only purpose in life is to initialize the hardware.
 void hardware_init_thread(ULONG thread_input)
@@ -437,7 +475,6 @@ void hardware_init_thread(ULONG thread_input)
     // Initialize the hardware
     if (initialize_hardware())
     {
-      
         hardwareInitOK = true;
     }
 
@@ -474,7 +511,6 @@ p *         data->swint.swint_sts bit_0: A7 read data from mailbox
 */
 void mbox_swint_cb(struct mtk_os_hal_mbox_cb_data *data)
 {
-
     if (data->swint.channel == OS_HAL_MBOX_CH0) {
         if (data->swint.swint_sts & (1 << 1)) {
             // There is a new message in the queue, set the flag so the mbox thread will process it
@@ -524,20 +560,25 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     }
 
     // Set the response message ID
-    payloadPtr->payload.cmd = IC_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtr->payload.cmd = IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
         
-        pressure = lp_get_pressure();
-        printf("LPS22HH: Pressure : %.2f\r\n", pressure);
+        // Grab the semaphore before reading the acceleration data structure
+        tx_semaphore_get(&lsm6dsoDataSemaphore, TX_WAIT_FOREVER);   
 
         // Construct the telemetry response
-        snprintf(payloadPtr->payload.telemetryJSON, 128,  "{\"pressure\": %.2f}",pressure);
+        snprintf(payloadPtr->payload.telemetryJSON, RT_TELEMETRY_BUFFER_SIZE,  "{\"gX\": %f, \"gY\": %f, \"gZ\": %f}", 
+                                                                                acceleration.x,
+                                                                                acceleration.y,
+                                                                                acceleration.z);
+        // Release the semaphore
+        tx_semaphore_put(&lsm6dsoDataSemaphore);   
     }
     else{
                         
         // The hardware is not initialized, send an error message response
-        snprintf(payloadPtr->payload.telemetryJSON, 128,  "{\"error\":\"Real time app could not initialize the hardware\"}");
+        snprintf(payloadPtr->payload.telemetryJSON, RT_TELEMETRY_BUFFER_SIZE,  "{\"error\":\"Real time app could not initialize the hardware\"}");
     }
 
     printf("\n\nSending to A7: %s\n",payloadPtr->payload.telemetryJSON);
@@ -553,8 +594,8 @@ bool initialize_hardware(void) {
 	tx_thread_sleep(MS_TO_TICK(100));
 
 	if (status) {
-		// Prime the temperature and humidity sensors
-		// Observed the first few readings on startup may return NaN
+		// Prime the sensors.  We have 
+		// observed the first few readings on startup may return NaN
 		for (size_t i = 0; i < 6; i++) {
 			if (!isnan(lp_get_temperature_lps22h()) && !isnan(lp_get_pressure())) {
 				break;

@@ -36,4 +36,4 @@ float lp_get_pressure(void);
 float lp_get_temperature_lps22h(void);	// get_temperature() from lsm6dso is faster
 void lp_calibrate_angular_rate(void);
 AngularRateDegreesPerSecond lp_get_angular_rate(void);
-AccelerationMilligForce lp_get_acceleration(void);
+bool lp_get_acceleration(AccelerationMilligForce*);
