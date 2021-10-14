@@ -1,0 +1,12 @@
+{
+  "SchemaVersion": 1,
+  "Name": "AvnetLSM6DSO-V1",
+  "ComponentId": "4562f281-3c44-457c-9af8-b1ce601ce4f9",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [],
+  "Capabilities": {
+    "I2cMaster": [ "ISU2" ],
+    "AllowedApplicationConnections": []
+  },
+  "ApplicationType": "RealTimeCapable"
+}
