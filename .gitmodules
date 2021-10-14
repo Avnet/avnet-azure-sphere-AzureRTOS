@@ -16,6 +16,6 @@
 [submodule "Examples/Avnet-LPS22HH-PressureSensorRTApp/threadx"]
 	path = Examples/Avnet-LPS22HH-PressureSensorRTApp/threadx
 	url = https://github.com/azure-rtos/threadx
-[submodule ".\\Examples\\Avnet-LSM6DS0RTApp\\threadx"]
-	path = .\\Examples\\Avnet-LSM6DS0RTApp\\threadx
+[submodule "Examples/Avnet-LSM6DSO-AccelerometerRTApp/threadx"]
+	path = Examples/Avnet-LSM6DSO-AccelerometerRTApp/threadx
 	url = https://github.com/azure-rtos/threadx
