@@ -14,7 +14,7 @@
       "applicationPath": "${debugInfo.target}",
       "imagePath": "${debugInfo.targetImage}",
       "targetCore": "RTCore",
-      "partnerComponents": ["< Add high level app ComponentID here>"]    
+      "partnerComponents": []    
     }
   ]
 }

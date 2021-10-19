@@ -14,7 +14,7 @@
             "environment": [],
             "externalConsole": true,
             "targetCore": "RTCore",
-            "partnerComponents": ["< Add high level app ComponentID here>"],
+            "partnerComponents": [],
             "MIMode": "gdb",
             "setupCommands": [
                 {
