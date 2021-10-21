@@ -1,7 +1,7 @@
 {
   "SchemaVersion": 1,
-  "Name": "AvnetLSM6DSOHTU21D-V1",
-  "ComponentId": "137a2cdf-494b-4e2e-8035-ffa02c7993ca",
+  "Name": "AvnetHTU21D-V1",
+  "ComponentId": "2b4d4b23-ee22-4877-a650-fda47b4e070e",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {

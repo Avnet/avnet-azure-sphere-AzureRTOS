@@ -42,12 +42,9 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "lsm6dso_htu21d_rtapp.h"
+#include "htu21d_rtapp.h"
 #include "./IMU_lib/imu_temp_pressure.h"
 #include "./HTU21D/htu21d.h"
-
-// Define global variables
-static float pressure = 0.0F;
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -67,7 +64,7 @@ typedef struct __attribute__((packed))
 {
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_ACCEL_TEMPHUM payload; // Pointer to the message data from/to the high level application
+    IC_COMMAND_BLOCK_TEMPHUM payload; // Pointer to the message data from/to the high level application
 } IC_SHARED_MEMORY_BLOCK;
 
 // Local buffer where we process data from/to the high level application
@@ -86,21 +83,10 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 0;
-
-// Variable that defines how often the read sensor thread reads the LSM6DSO accelermonitor sensor
-// The default of 2 says that the thread will read the sensor 2 times a second. 
-static UINT sensor_read_thread_samples_per_second = 100;
-
-// Variable that defines how often the HTU21D thread reads the sensor
-// The default of 1 says that the thread will read the sensor 1 times a second. 
-static UINT htu21d_read_thread_seconds_per_sample = 1;
+static UINT send_telemetry_thread_period = 1;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
-
-// Variable to hold current acceleration values from LSM6DSO device
-static AccelerationMilligForce acceleration;
 
 // Variables to hold HTU21D sensor readings
 float temperature;
@@ -113,26 +99,16 @@ enum triggers {
 };
 
 // Define a structure/variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK_ACCEL_TEMPHUM ic_control_block;
-
-/* Define Semaphores */
+IC_COMMAND_BLOCK_TEMPHUM ic_control_block;
 
 // Note: This semaphore is used by the shared memory interface and is required in this implementation
 volatile UCHAR  blockFifoSema;
-
-// This semaphore is used to protect access to the global sensor variable
-TX_SEMAPHORE  lsm6dsoDataSemaphore;
-
-// This semaphore is used to protect access to shared i2c buss
-TX_SEMAPHORE  i2cBussSemaphore;
 
 /* Define the ThreadX object control blocks...  */
 
 // Threads
 TX_THREAD               thread_mbox;
 TX_THREAD               thread_set_telemetry_flag;
-TX_THREAD               thread_sensor_read;
-TX_THREAD               thread_htu21d_read;
 TX_THREAD               tx_hardware_init_thread;
 
 // Application memory pool
@@ -146,8 +122,6 @@ TX_EVENT_FLAGS_GROUP    hardware_event_flags_0;
 /* Define thread prototypes.  */
 void tx_thread_mbox_entry(ULONG thread_input);
 void set_telemetry_flag_thread_entry(ULONG thread_input);
-void sensor_read_thread_entry(ULONG thread_input);
-void htu21d_sensor_read_thread_entry(ULONG thread_input);
 void hardware_init_thread(ULONG thread_input);
 
 /* Function prototypes */
@@ -201,21 +175,6 @@ void tx_application_define(void *first_unused_memory)
     tx_thread_create(&thread_mbox, "thread_mbox", tx_thread_mbox_entry, 0,
             pointer, APP_STACK_SIZE, 8, 8, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-
-    /* Allocate the stack for the sensor read thread  */
-    tx_byte_allocate(&byte_pool_0, (VOID **) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
-
-    /* Create the sensor read thread.  */
-    tx_thread_create(&thread_sensor_read, "read sensor thread", sensor_read_thread_entry, 0,
-            pointer, APP_STACK_SIZE, 7, 7, TX_NO_TIME_SLICE, TX_AUTO_START);
-
-    /* Allocate the stack for the htu21d sensor read thread  */
-    tx_byte_allocate(&byte_pool_0, (VOID **) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
-
-    /* Create the htu21d read thread.  */
-    tx_thread_create(&thread_htu21d_read, "read htu21d thread", htu21d_sensor_read_thread_entry, 0,
-            pointer, APP_STACK_SIZE, 7, 7, TX_NO_TIME_SLICE, TX_AUTO_START);
-
     /* Allocate the stack for the telemetry set flag thread  */
     tx_byte_allocate(&byte_pool_0, (VOID **) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
 
@@ -230,18 +189,12 @@ void tx_application_define(void *first_unused_memory)
     tx_thread_create(&tx_hardware_init_thread, "hardware init thread", hardware_init_thread, 0,
         pointer, APP_STACK_SIZE, 6, 6, TX_NO_TIME_SLICE, TX_AUTO_START);    
 
-    /* Create the semaphore used make sure we always store/use a complete set of accelerometer data */
-    tx_semaphore_create(&lsm6dsoDataSemaphore, "LSM6DSO Data semaphore", 1); 
-
-    /* Create the semaphore used make sure we always store/use a complete set of accelerometer data */
-    tx_semaphore_create(&i2cBussSemaphore, "I2C Buss semaphore", 1); 
-
     // -------------------------------- mailbox channels --------------------------------
 
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS LSM6DSO and HTU21D V1 Accelerometer, Temperature and Humidity application ****\n");
+    printf("\n\n**** Avnet AzureRTOS HTU21D V1 Temperature and Humidity application ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -341,14 +294,14 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry.  Send up random
                     // telemetry to exercise the interface.
-                    case IC_ACCEL_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_ACCEL_TEMPHUM_SET_TELEMETRY_SEND_RATE:
+                    case IC_TEMPHUM_SET_TELEMETRY_SEND_RATE:
 
                         printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtr->payload.telemtrySendRate);
 
@@ -360,93 +313,26 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_COMMAND_BLOCK_TEMPHUM)+1);
                         break;
 
-                    // If the real time application sends this message, then the payload contains
-                    // a new sample rate for reading the sensor.
-                    case IC_ACCEL_TEMPHUM_SET_ACCEL_SENSOR_SAMPLE_RATE:
+                    case IC_TEMPHUM_READ_TEMP_HUM_SENSOR:
+	
+                        if(hardwareInitOK){
 
-                        printf("Set the real time application accelerometer sensor read period to %lu reads/second\n", payloadPtr->payload.sensorSampleRateAccel);
+                            // Read the sensor
+                            htu21d_read_temperature_and_relative_humidity(&temperature, &humidity);
+                            payloadPtr->payload.temp = temperature;
+                            payloadPtr->payload.hum = humidity;
+                        }
 
-                        // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
-                        // between reading sensors/sending telemetry
-                        sensor_read_thread_samples_per_second = payloadPtr->payload.sensorSampleRateAccel;
-
-                        // Wake up the sensor read thread so that it will start using the new sample rate we just set
-                        tx_thread_wait_abort(&thread_sensor_read);
-
-                        // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
-                        break;
-
-                    // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
-                    // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_ACCEL_TEMPHUM_READ_ACCEL_SENSOR:
-
-                        // Grab the i2c Buss semaphore before reading the sensor 
-                        tx_semaphore_get(&i2cBussSemaphore, TX_WAIT_FOREVER);   
-
-                        htu21d_read_temperature_and_relative_humidity(&temperature, &humidity);
-                        payloadPtr->payload.temp = temperature;
-                        payloadPtr->payload.hum = humidity;
-
-                        // Release the semaphore
-                        tx_semaphore_put(&i2cBussSemaphore);
-
-                        printf("RealTime App sending sensor reading temp:%f, humidity:%f,\n", payloadPtr->payload.temp, 
-                                                                                              payloadPtr->payload.hum);
-
-                        // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
-                        break;
-
-                    case IC_ACCEL_TEMPHUM_READ_TEMP_HUM_SENSOR: 
-
-                        // Grab the semaphore before updating the acceleration data structure to make sure we're
-                        // getting a complete set
-                        tx_semaphore_get(&lsm6dsoDataSemaphore, TX_WAIT_FOREVER);   
-
-                        // Read the pressure sensor and copy it into the response buffer
-                        payloadPtr->payload.accelX = acceleration.x;
-                        payloadPtr->payload.accelY = acceleration.y;
-                        payloadPtr->payload.accelZ = acceleration.z;
-
-                        // Release the semaphore
-                        tx_semaphore_put(&lsm6dsoDataSemaphore);   
-
-                        printf("RealTime App sending sensor reading x:%f, y:%f, z%f\n", payloadPtr->payload.accelX, 
-                                                                                        payloadPtr->payload.accelY, 
-                                                                                        payloadPtr->payload.accelZ);
-
-                        // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
-                        break;
-
-
-                    case IC_ACCEL_TEMPHUM_SET_TEMPHUM_SENSOR_SAMPLE_RATE:
-                        
-                        printf("Set the real time application Temp Humidity sensor read period to %lu reads/second\n", payloadPtr->payload.sensorSampleRateTempHum);
-
-                        // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
-                        // between reading sensors/sending telemetry
-                        htu21d_read_thread_seconds_per_sample = payloadPtr->payload.sensorSampleRateTempHum;
-
-                        // Wake up the sensor read thread so that it will start using the new sample rate we just set
-                        tx_thread_wait_abort(&thread_htu21d_read);
-
-                        // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
-                        break;
-
-
-                    case IC_ACCEL_TEMPHUM_HEARTBEAT:
+                    case IC_TEMPHUM_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_COMMAND_BLOCK_TEMPHUM)+1);
                         break;
-                    case IC_ACCEL_TEMPHUM_UNKNOWN:
+                    case IC_TEMPHUM_UNKNOWN:
                     default:
                         break;
                 }
@@ -494,67 +380,6 @@ void set_telemetry_flag_thread_entry(ULONG thread_input)
             
         // Sleep the specified time
         tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND * sleep_time_seconds);
-    }
-}
-
-// This tread is responsible for reading the sensor.  It reads the sensor and stores the reading into a global variable.
-void sensor_read_thread_entry(ULONG thread_input)
-{
-    printf("Read Sensor Task Started\n");
-
-    while (true){
-
-        if(hardwareInitOK){
-
-            // Grab the i2c Buss semaphore before reading the sensor 
-            tx_semaphore_get(&i2cBussSemaphore, TX_WAIT_FOREVER);   
-
-            // Grab the semaphore before updating the acceleration data structure
-            tx_semaphore_get(&lsm6dsoDataSemaphore, TX_WAIT_FOREVER);   
-
-            // Read the sensor, if it's not ready this call returns false        
-            if(lp_get_acceleration(&acceleration)){
-                printf("%f, %f, %f\n", acceleration.x, acceleration.y, acceleration.z);
-            }
-            else{
-                printf("Call to lp_get_acceleration() failed\n");
-            }
-            
-            // Release the semaphores
-            tx_semaphore_put(&lsm6dsoDataSemaphore);
-            tx_semaphore_put(&i2cBussSemaphore);
-
-        }
-   
-        // Sleep the specified time
-        tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND/sensor_read_thread_samples_per_second);
-    }
-}
-
-
-// This tread is responsible for reading the sensor.  It reads the sensor and stores the reading into a global variable.
-void htu21d_sensor_read_thread_entry(ULONG thread_input)
-{
-    printf("Read HTU21D Sensor Task Started\n");
-
-    while (true){
-
-        if(hardwareInitOK){
-
-
-            // Grab the i2c Buss semaphore before reading the sensor 
-            tx_semaphore_get(&i2cBussSemaphore, TX_WAIT_FOREVER);   
-
-            htu21d_read_temperature_and_relative_humidity(&temperature, &humidity);
-           
-            // Release the semaphores
-            tx_semaphore_put(&i2cBussSemaphore);
-
-            printf("\t\t\t\t\ttemp: %.2f, hum: %.2f\n", temperature, humidity);
-        }
-   
-        // Sleep the specified time
-        tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND*htu21d_read_thread_seconds_per_sample);
     }
 }
 
@@ -649,23 +474,18 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     }
 
     // Set the response message ID
-    payloadPtr->payload.cmd = IC_ACCEL_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtr->payload.cmd = IC_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
-        
-        // Grab the semaphore before reading the acceleration data structure
-        tx_semaphore_get(&lsm6dsoDataSemaphore, TX_WAIT_FOREVER);   
+
+        // Read the sensor
+        htu21d_read_temperature_and_relative_humidity(&temperature, &humidity);
 
         // Construct the telemetry response
-        snprintf(payloadPtr->payload.telemetryJSON, RT_TELEMETRY_BUFFER_SIZE,  "{\"gX\": %f, \"gY\": %f, \"gZ\": %f, \"temp\": %f, \"hum\":%f}", 
-                                                                                acceleration.x,
-                                                                                acceleration.y,
-                                                                                acceleration.z,
+        snprintf(payloadPtr->payload.telemetryJSON, RT_TELEMETRY_BUFFER_SIZE,  "{\"temp\": %f, \"hum\":%f}", 
                                                                                 temperature,
                                                                                 humidity);
-        
-        // Release the semaphore
-        tx_semaphore_put(&lsm6dsoDataSemaphore);   
+       
     }
     else{
                         
@@ -682,42 +502,24 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 // Update this routine to initialize any hardware interfaces required by your implementation
 bool initialize_hardware(void) {
 
-    // Grab the i2c Buss semaphore before reading the sensor 
-    tx_semaphore_get(&i2cBussSemaphore, TX_WAIT_FOREVER);   
+//	bool status = (lp_imu_initialize());
 
-	bool status = (lp_imu_initialize());
+	mtk_os_hal_i2c_ctrl_init(i2cHandle);
+	mtk_os_hal_i2c_speed_init(i2cHandle, i2c_speed);
+
 	tx_thread_sleep(MS_TO_TICK(100));
-
-	if (status) {
-		// Prime the sensors.  We have 
-		// observed the first few readings on startup may return NaN
-		for (size_t i = 0; i < 6; i++) {
-			if (!isnan(lp_get_temperature_lps22h()) && !isnan(lp_get_pressure())) {
-				break;
-			}
-			tx_thread_sleep(MS_TO_TICK(100));
-		}
-        pressure = lp_get_pressure();
-
-	}
 
     if (htu21d_reset() != htu21d_status_ok) {
 
         // Release the semaphores
-        tx_semaphore_put(&i2cBussSemaphore);
         return false;
     }
 
     if (htu21d_set_resolution(htu21d_resolution_t_14b_rh_12b) != htu21d_status_ok) {
         // Release the semaphores
-        tx_semaphore_put(&i2cBussSemaphore);
         return false;
     }    
 
     printf("hardware initialized!\n");
-
-    // Release the semaphores
-    tx_semaphore_put(&i2cBussSemaphore);
-
-    return status;
+    return true;
 }
