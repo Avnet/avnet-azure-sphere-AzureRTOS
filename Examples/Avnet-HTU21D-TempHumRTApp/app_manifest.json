@@ -1,0 +1,12 @@
+{
+  "SchemaVersion": 1,
+  "Name": "AvnetLSM6DSOHTU21D-V1",
+  "ComponentId": "137a2cdf-494b-4e2e-8035-ffa02c7993ca",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [],
+  "Capabilities": {
+    "I2cMaster": [ "ISU2" ],
+    "AllowedApplicationConnections": []
+  },
+  "ApplicationType": "RealTimeCapable"
+}

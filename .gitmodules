@@ -16,3 +16,6 @@
 [submodule "Examples/Avnet-LSM6DSO-AccelerometerRTApp/threadx"]
 	path = Examples/Avnet-LSM6DSO-AccelerometerRTApp/threadx
 	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/Avnet-HTU21D-TempHumRTApp/threadx"]
+	path = Examples/Avnet-HTU21D-TempHumRTApp/threadx
+	url = https://github.com/azure-rtos/threadx
