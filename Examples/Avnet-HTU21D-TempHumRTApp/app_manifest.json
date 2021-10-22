@@ -1,0 +1,12 @@
+{
+  "SchemaVersion": 1,
+  "Name": "AvnetHTU21D-V1",
+  "ComponentId": "2b4d4b23-ee22-4877-a650-fda47b4e070e",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [],
+  "Capabilities": {
+    "I2cMaster": [ "ISU2" ],
+    "AllowedApplicationConnections": []
+  },
+  "ApplicationType": "RealTimeCapable"
+}
