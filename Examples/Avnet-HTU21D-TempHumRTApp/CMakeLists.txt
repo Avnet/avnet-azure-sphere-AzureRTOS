@@ -37,9 +37,6 @@ add_executable(${PROJECT_NAME}
                 ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_wdt.c
                 ./mbox_logic.c 
                 ./rtcoremain.c
-                ../../IMU_lib/imu_temp_pressure.c
-                ../../IMU_lib/lps22hh_reg.c
-                ../../IMU_lib/lsm6dso_reg.c
                 ../../HTU21D/htu21d.c
                 ./tx_initialize_low_level.S)
 

@@ -43,7 +43,6 @@
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
 #include "htu21d_rtapp.h"
-#include "./IMU_lib/imu_temp_pressure.h"
 #include "./HTU21D/htu21d.h"
 
 // Add MT3620 constant
@@ -83,7 +82,7 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 1;
+static UINT send_telemetry_thread_period = 0;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
@@ -502,23 +501,11 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 // Update this routine to initialize any hardware interfaces required by your implementation
 bool initialize_hardware(void) {
 
-//	bool status = (lp_imu_initialize());
-
-	mtk_os_hal_i2c_ctrl_init(i2cHandle);
-	mtk_os_hal_i2c_speed_init(i2cHandle, i2c_speed);
-
 	tx_thread_sleep(MS_TO_TICK(100));
 
-    if (htu21d_reset() != htu21d_status_ok) {
-
-        // Release the semaphores
+    if(htu21d_init() != htu21d_status_ok){
         return false;
     }
-
-    if (htu21d_set_resolution(htu21d_resolution_t_14b_rh_12b) != htu21d_status_ok) {
-        // Release the semaphores
-        return false;
-    }    
 
     printf("hardware initialized!\n");
     return true;

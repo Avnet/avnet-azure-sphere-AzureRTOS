@@ -7,24 +7,12 @@
 
 #include "htu21d.h"
 #include <os_hal_i2c.h>
-#include "../IMU_lib/imu_temp_pressure.h"
+
+const uint8_t i2c_speed = I2C_SCL_1000kHz;
+uint8_t i2cHandle = OS_HAL_I2C_ISU2;
 
 // HTU21D Global Variables
 htu21d_resolution	htu21d_res;
-
-/// <summary>
-///     Sleep for delayTime ms
-/// </summary>
-void HAL_Delay(int delayTime)
-{
-//    struct timespec ts;
-//    ts.tv_sec = 0;
-//    ts.tv_nsec = delayTime * 1000000;
-//    nanosleep(&ts, NULL);
-
-	platform_delay(delayTime);
-
-}
 
 /*********************************************************************
  *
@@ -40,42 +28,27 @@ void HAL_Delay(int delayTime)
  * Returns:		void
  *
  *********************************************************************/
-void htu21d_init(void){
+htu21d_status htu21d_init(void){
 
-/*
-	i2cFd = I2CMaster_Open(AVNET_MT3620_SK_ISU2_I2C);
-    
-	if (i2cFd == -1) {
-        Log_Debug("ERROR: I2CMaster_Open: errno=%d (%s)\n", errno, strerror(errno));
-        return ExitCode_Init_OpenMaster;
-    }
-
-    int result = I2CMaster_SetBusSpeed(i2cFd, I2C_BUS_SPEED_STANDARD);
-    if (result != 0) {
-        Log_Debug("ERROR: I2CMaster_SetBusSpeed: errno=%d (%s)\n", errno, strerror(errno));
-        return ExitCode_Init_SetBusSpeed;
-    }
-
-    result = I2CMaster_SetTimeout(i2cFd, 100);
-    if (result != 0) {
-        Log_Debug("ERROR: I2CMaster_SetTimeout: errno=%d (%s)\n", errno, strerror(errno));
-        return ExitCode_Init_SetTimeout;
-    }
+	if (mtk_os_hal_i2c_ctrl_init(i2cHandle) < 0){
+		return htu21d_status_i2c_transfer_error;
+	}
+	
+	if (mtk_os_hal_i2c_speed_init(i2cHandle, i2c_speed) != 0){
+		return htu21d_status_i2c_transfer_error;
+	}
 
 	if (htu21d_reset() != htu21d_status_ok) {
-        return ExitCode_SampleRange_Reset;
+		return htu21d_status_i2c_transfer_error;
     }
 
     if (htu21d_set_resolution(htu21d_resolution_t_14b_rh_12b) != htu21d_status_ok) {
-        return ExitCode_SampleRange_Reset;
+		return htu21d_status_i2c_transfer_error;
     }
 	
 	htu21d_res = htu21d_resolution_t_14b_rh_12b;
 
-*/
-
-
-    return;
+    return htu21d_status_ok;
 }
 
 
@@ -128,7 +101,7 @@ htu21d_status htu21d_reset(void){
 htu21d_status	htu21d_set_resolution(htu21d_resolution res){
 
 	htu21d_res = res;
-	uint8_t tx_buf[2];
+	uint8_t tx_buf[1];
     uint8_t rx_buf[1];
 	uint32_t ret;
 
@@ -138,7 +111,7 @@ htu21d_status	htu21d_set_resolution(htu21d_resolution res){
 	if(ret < 0){
 		return htu21d_status_i2c_transfer_error;
 	}
-
+	
 	// Modify user register to reflect resolution change
     tx_buf[1] = rx_buf[0] & (uint8_t) ~(HTU21D_RESOLUTION_BIT7_MASK | HTU21D_RESOLUTION_BIT0_MASK); // Zero out bits 7 and 0
 	if(res==htu21d_resolution_t_13b_rh_10b || res==htu21d_resolution_t_11b_rh_11b)
@@ -152,6 +125,7 @@ htu21d_status	htu21d_set_resolution(htu21d_resolution res){
 	if(ret < 0){
 		return htu21d_status_i2c_transfer_error;
 	}
+
 	return htu21d_status_ok;
 }
 

@@ -10,20 +10,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
-//#include <bits/alltypes.h>
-//#include <applibs/i2c.h>
 #include <time.h>
-//#include <applibs/log.h>
 #include <errno.h>
 #include <string.h>
 #include "math.h"
+#include "os_hal_i2c.h"
+#include "tx_api.h"
 
-#ifndef HTU21D_H_
-#define HTU21D_H_
-
-// Temperature Sensor
-//extern int i2cFd;
-void HAL_Delay(int delayTime);
+// 1 tick = 10ms. It is configurable.
+#define MS_TO_TICK(ms)  ((ms) * (TX_TIMER_TICKS_PER_SECOND) / 100) 
 
 // HTU21D Constants
 #define HTU21D_I2C_ADDR				(0x40)	// 1000_000x
@@ -67,13 +62,12 @@ typedef enum htu21d_heater_status{
 	htu21d_heater_on = 1
 }htu21d_heater_status;
 
-#endif /* HTU21D_H_ */
 
 // External variables
 extern	htu21d_resolution	htu21d_res;
 
 // Function Declarations
-void			htu21d_init(void);
+htu21d_status	htu21d_init(void);
 htu21d_status	htu21d_reset(void);
 htu21d_status	htu21d_set_resolution(htu21d_resolution);
 htu21d_status	htu21d_read_temperature_and_relative_humidity(float* t, float* rh);
