@@ -16,6 +16,8 @@ Reads a GROVE GPS UART device
 Reads the Avnet Starter Kit LPS22HH I2C sensor 
 ## Avnet-LSM6DSO-AccelerometerRTApp (10/15/21)
 Reads the Avnet Starter Kit LSM5DSO accelerometer I2C sensor
+## Avnet-HTU21D-TempHumRTApp (10/22/21)
+Reads temperature and humidity from a MikroE Temp-Hum13 click board based on the TE Connectivity HTU21D sensor
 
 ## Instructions for adding a new example to this repo
 1. Clone the repo to the local drive ```git clone --recurse-submodules https://github.com/Avnet/avnet-azure-sphere-AzureRTOS.git <target directory>```
