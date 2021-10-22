@@ -42,7 +42,7 @@ To configure a high level DevX application to use this binary ...
       DX_INTERCORE_BINDING intercore_htu21d_sensor = {
       .sockFd = -1,
       .nonblocking_io = true,
-      .rtAppComponentId = "137a2cdf-494b-4e2e-8035-ffa02c7993ca",
+      .rtAppComponentId = "2b4d4b23-ee22-4877-a650-fda47b4e070e",
       .interCoreCallback = htu21d_receive_msg_handler,
       .intercore_recv_block = &ic_control_block_htu21d_sensor,
       .intercore_recv_block_length = sizeof(ic_control_block_htu21d_sensor)};
@@ -52,7 +52,6 @@ To configure a high level DevX application to use this binary ...
 
 * Include the handler to process interCore responses
       
-       /// <summary>
       /// <summary>
       /// htu21d_receive_msg_handler()
       /// This handler is called when the high level application receives a response from the 
