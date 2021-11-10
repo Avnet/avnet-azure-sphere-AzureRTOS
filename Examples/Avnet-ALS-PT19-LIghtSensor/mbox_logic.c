@@ -44,8 +44,10 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "os_hal_adc.h"
 #include "als_pt19_light_sensor.h"
- 
+#include "intercore_generic.h"
+#include <assert.h>
 
+// These ADC settings work for both of the Avnet Starter kits Rev1 and Rev2
 #define ADC_GPIO                41            /* ADC0 = GPIO41 */
 #define ADC_DATA_MASK           (BITS(4, 15))  /* ADC sample data mask (bit_4 ~ bit_15) */
 #define ADC_DATA_BIT_OFFSET     4            /* ADC sample data bit offset */
@@ -57,6 +59,7 @@
 // Define global variables
 struct adc_fsm_param adc_fsm_parameter;
 UINT adc_rx_buf_one_shot_mode[CHANNEL_NUM];
+uint32_t sensorDataAverage = 0;
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -74,11 +77,17 @@ UINT adc_rx_buf_one_shot_mode[CHANNEL_NUM];
 // Define the memory layout of the incomming and outgoing message buffer
 typedef struct __attribute__((packed))
 {
-    UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_ALS_PT19 payload; // Pointer to the message data from/to the high level application
-} IC_SHARED_MEMORY_BLOCK;
+    UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
+    IC_COMMAND_BLOCK_ALS_PT19_HL_TO_RT payload; // Pointer to the message data from the high level app
+} IC_SHARED_MEMORY_BLOCK_HL_TO_RT;
 
+typedef struct __attribute__((packed))
+{
+    UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
+    UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
+    IC_COMMAND_BLOCK_ALS_PT19_RT_TO_HL payload; // Pointer to the message data from the high level app
+} IC_SHARED_MEMORY_BLOCK_RT_TO_HL;
 
 // Local buffer where we process data from/to the high level application
 static UCHAR mbox_local_buf[MBOX_BUFFER_LEN_MAX];
@@ -107,9 +116,6 @@ enum triggers {
     PERIODIC_TELEMETRY = 1
 };
 
-// Define a variable to use when processing/responding to high level appliation messages
-IC_COMMAND_BLOCK_ALS_PT19 ic_control_block;
-
 /* Define Semaphores */
 
 // Note: This semaphore is used by the shared memory interface and is required in this implementation
@@ -121,6 +127,7 @@ volatile UCHAR  blockFifoSema;
 TX_THREAD               thread_mbox;
 TX_THREAD               thread_set_telemetry_flag;
 TX_THREAD               tx_hardware_init_thread;
+TX_THREAD               tx_read_sensor_thread;
 
 // Application memory pool
 TX_BYTE_POOL            byte_pool_0;
@@ -134,6 +141,7 @@ TX_EVENT_FLAGS_GROUP    hardware_event_flags_0;
 void tx_thread_mbox_entry(ULONG thread_input);
 void set_telemetry_flag_thread_entry(ULONG thread_input);
 void hardware_init_thread(ULONG thread_input);
+void read_sensor_thread(ULONG thread_input);
 
 /* Function prototypes */
 void mbox_fifo_cb(struct mtk_os_hal_mbox_cb_data *data);
@@ -187,7 +195,7 @@ void tx_application_define(void *first_unused_memory)
     tx_thread_create(&thread_mbox, "thread_mbox", tx_thread_mbox_entry, 0,
             pointer, APP_STACK_SIZE, 8, 8, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-    /* Allocate the stack for the sensor_read_thread  */
+    /* Allocate the stack for the telemetry set flag thread  */
     tx_byte_allocate(&byte_pool_0, (VOID **) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
 
     /* Create the telemetry set flag thread.  */
@@ -201,12 +209,19 @@ void tx_application_define(void *first_unused_memory)
     tx_thread_create(&tx_hardware_init_thread, "hardware init thread", hardware_init_thread, 0,
         pointer, APP_STACK_SIZE, 6, 6, TX_NO_TIME_SLICE, TX_AUTO_START);    
 
+    /* Allocate the stack for the read_sensor_thread  */
+    tx_byte_allocate(&byte_pool_0, (VOID**) &pointer, APP_STACK_SIZE, TX_NO_WAIT);
+    
+    // Create a read sensor thread.
+    tx_thread_create(&tx_read_sensor_thread, "read sensor thread", read_sensor_thread, 0,
+        pointer, APP_STACK_SIZE, 6, 6, TX_NO_TIME_SLICE, TX_AUTO_START);    
+
     // -------------------------------- mailbox channels --------------------------------
 
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS ALS-PT19 V2 Light Sensor application ****\n");
+    printf("\n\n**** Avnet AzureRTOS ALS-PT19 V3 Light Sensor application ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -247,7 +262,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
     // The thread loop
     while (true) {
 
-        tx_thread_sleep(10);
+//        tx_thread_sleep(10);
 
         // Read the telemetry event flags, this call will block until one of the flags is set
         // Once the call returns, it will also clear the event flags.  We use the actual_flags variable
@@ -274,83 +289,89 @@ void tx_thread_mbox_entry(ULONG thread_input)
             while(queuedMessages){
 
                 /* Init buffer */
-                memset(mbox_local_buf, 0, MBOX_BUFFER_LEN_MAX);
+                memset(mbox_local_buf, 0x00, MBOX_BUFFER_LEN_MAX);
 
-                /* Read from high level application, dequeue from mailbox */
+                /* Read from high level application into the local buffer, dequeue from mailbox */
                 mbox_local_buf_len = MBOX_BUFFER_LEN_MAX;
                 result = DequeueData(outbound, inbound, mbox_shared_buf_size, mbox_local_buf, &mbox_local_buf_len);
                 
                 // Verify we received a new message                
-                if (result == -1 || (mbox_local_buf_len < RESERVED_BYTES_IN_SHARED_MEMORY + COMPONENT_ID_LEN_IN_SHARED_MEMORY)) {
+                if (result == -1 || (mbox_local_buf_len <= RESERVED_BYTES_IN_SHARED_MEMORY + COMPONENT_ID_LEN_IN_SHARED_MEMORY)) {
                     printf("Message queue is empty!\n");
                     // Set the flag, we've processed all the messages in the queue
                     queuedMessages = false;
                     continue;
                 }
 
+                // Setup two pointers to the mbox_local_buf that contains the incomming message.  We use two different pointers
+                // since the messsage/memory layout for incomming messages is different than outgoing messages.  However, we
+                // use the same mbox_local_buf memory for messages in and out.
+                IC_SHARED_MEMORY_BLOCK_HL_TO_RT *payloadPtrIncomming = (IC_SHARED_MEMORY_BLOCK_HL_TO_RT*)mbox_local_buf;
+                IC_SHARED_MEMORY_BLOCK_RT_TO_HL *payloadPtrOutgoing = (IC_SHARED_MEMORY_BLOCK_RT_TO_HL*)mbox_local_buf;
+
                 // Make a local copy of the message header.  This header contains the component ID of the high level
                 // application.  We need to add this header to messages being sent up to the high level application.
                 for(int i = 0; i < COMMAND_BLOCK_OFFSET; i++){
-                    messageHeader[i] = mbox_local_buf[i];
+                    messageHeader[i] = payloadPtrIncomming->highLevelAppComponentID[i];
                 }
 
-                // Init a pointer to the incomming message, cast it so we can index into the structure
-                IC_SHARED_MEMORY_BLOCK *payloadPtr = (IC_SHARED_MEMORY_BLOCK*)mbox_local_buf;
-
                 /* Print the received message.*/
-                mbox_print(mbox_local_buf, mbox_local_buf_len);
+                mbox_print((u8*)payloadPtrIncomming, mbox_local_buf_len);
                 
                 /* Process the command from the high level Application */
-                switch (payloadPtr->payload.cmd)
+                switch (payloadPtrIncomming->payload.cmd)
                 {
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry.  Send up random
                     // telemetry to exercise the interface.
-                    case IC_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_LIGHTSENSOR_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_SET_SAMPLE_RATE:
+                    case IC_LIGHTSENSOR_SAMPLE_RATE:
 
-                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtr->payload.sensorSampleRate);
+                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtrIncomming->payload.sensorSampleRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        send_telemetry_thread_period = payloadPtr->payload.sensorSampleRate;
+                        send_telemetry_thread_period = payloadPtrIncomming->payload.sensorSampleRate;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_COMMAND_BLOCK_ALS_PT19_RT_TO_HL)+1);
                         break;
 
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_READ_SENSOR:
+                    case IC_LIGHTSENSOR_READ_SENSOR:
 
                         // Read the light sensor data and copy it into the response buffer
-                        payloadPtr->payload.sensorData = adcRead();
-                        printf("RealTime App sending sensor reading 32-bit: %lu\n", payloadPtr->payload.sensorData);
+                        payloadPtrOutgoing->payload.sensorData = sensorDataAverage;
+                        printf("RealTime App sending sensor reading 32-bit: %lu\n", payloadPtrOutgoing->payload.sensorData);
 
                         // Read the light sensor data and copy it into the response buffer
-                        payloadPtr->payload.lightSensorLuxData = (float)(payloadPtr->payload.sensorData*2.5/4095)*1000000 / (float)(3650*0.1428);
-                        printf("RealTime App sending LUX data: %.2f\n", payloadPtr->payload.lightSensorLuxData);
+                        payloadPtrOutgoing->payload.lightSensorLuxData = (float)(payloadPtrOutgoing->payload.sensorData*2.5/4095)*1000000 / (float)(3650*0.1428);
+                        printf("RealTime App sending LUX data: %.2f\n", payloadPtrOutgoing->payload.lightSensorLuxData);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL)+1);
                         break;
 
-                    case IC_HEARTBEAT:
+                    case IC_LIGHTSENSOR_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
+                        // Cast the pointer to reference the RT to HL structure
+                        payloadPtrOutgoing = (IC_SHARED_MEMORY_BLOCK_RT_TO_HL*)mbox_local_buf;
+
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL)+1);
                         break;
-                    case IC_UNKNOWN:
+                    case IC_LIGHTSENSOR_UNKNOWN:
                     default:
                         break;
                 }
@@ -404,6 +425,7 @@ void set_telemetry_flag_thread_entry(ULONG thread_input)
 // only purpose in life is to initialize the hardware.
 void hardware_init_thread(ULONG thread_input)
 {
+
     // Initialize the hardware
     if (initialize_hardware())
     {
@@ -412,6 +434,52 @@ void hardware_init_thread(ULONG thread_input)
     }
 
     printf("Hardware Init - %s\r\n", hardwareInitOK ? "OK" : "FAIL");
+}
+
+
+// This thread is used to frequenty read the light sensor and continually compute an average
+// reading to smooth out the data
+void read_sensor_thread(ULONG thread_input)
+{
+
+#define DATA_ARRAY_SIZE 16
+    // Define an array to hold the data
+    static uint32_t sensorData[DATA_ARRAY_SIZE] = {0x00};
+    static uint64_t runningTotal = 0x00;
+    static uint8_t index = 0;
+    static uint8_t dataCount = 0;
+
+    while (1) {
+
+        if (hardwareInitOK){
+
+            // Update the current index with a new read
+            sensorData[index] = adcRead();
+
+            // Increment and mask off the index to constrain it to our array
+            index++;
+            index &= 0x1F;
+
+            // Don't calculate an average unless we have a full array
+            if(dataCount++ > DATA_ARRAY_SIZE){
+
+                // reset the dataCount to let us back into this code section on every next pass
+                dataCount = DATA_ARRAY_SIZE+1;
+
+                // Calculate the average of the data in the array                
+                runningTotal = 0;
+                for(u8 i = 0; i < DATA_ARRAY_SIZE; i++){
+                    runningTotal += sensorData[i];
+                }
+                
+                // Update the global variable with the new average
+                sensorDataAverage = runningTotal/DATA_ARRAY_SIZE;              
+
+            }
+        }    
+        // Sleep
+        tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND/100);
+    }
 }
 
 /* Mailbox Fifo Interrupt handler.
@@ -439,7 +507,7 @@ void mbox_fifo_cb(struct mtk_os_hal_mbox_cb_data *data)
  * SW interrupt is triggered when:
  *    A7 read/write the shared memory.
  *      Channel_0:
-p *         data->swint.swint_sts bit_0: A7 read data from mailbox
+ *         data->swint.swint_sts bit_0: A7 read data from mailbox
  *         data->swint.swint_sts bit_1: A7 write data to mailbox
 */
 void mbox_swint_cb(struct mtk_os_hal_mbox_cb_data *data)
@@ -485,16 +553,17 @@ void mbox_print(u8 *mbox_buf, u32 mbox_data_len)
 
 void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size){
     
-    // Init a pointer to the incomming message, cast it so we can index into the structure
-    IC_SHARED_MEMORY_BLOCK *payloadPtr = (IC_SHARED_MEMORY_BLOCK*)mbox_local_buf;
+    // Init a pointer to the outgoing message, cast it so we can index into the structure, the mbox_local_buf
+    // already contains a copy of the incomming message
+    IC_SHARED_MEMORY_BLOCK_RT_TO_HL *payloadPtrOutgoing = (IC_SHARED_MEMORY_BLOCK_RT_TO_HL*)mbox_local_buf;
 
     // Copy the header from the incomming message to the message going up.
     for(int i = 0; i < COMMAND_BLOCK_OFFSET; i++){
-        mbox_local_buf[i] = messageHeader[i];
+        payloadPtrOutgoing->highLevelAppComponentID[i] = messageHeader[i];
     }
 
     // Set the response message ID
-    payloadPtr->payload.cmd = IC_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtrOutgoing->payload.cmd = IC_LIGHTSENSOR_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
 
@@ -507,22 +576,22 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 	    // divide by 0.5 to get Lux (based on incandescent light Fig. 1 datasheet)
 	    // We can simplify the factors, but for demostration purpose it's OK
 	    
-        float light_sensor = (float)(adcRead()*2.5/4095)*1000000 / (float)(3650*0.1428);        
+        float light_sensor = (float)(sensorDataAverage*2.5/4095)*1000000 / (float)(3650*0.1428);        
         //printf("ALSPT19: Ambient Light[Lux] : %.2f\r\n", light_sensor);
 
         // Construct the telemetry response
-        snprintf(payloadPtr->payload.telemetryJSON, 128,  "{\"light_intensity\": %.2f}",light_sensor);
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"light_intensity\": %.2f}",light_sensor);
     }
     else{
                         
         // The hardware is not initialized, send an error message response
-        snprintf(payloadPtr->payload.telemetryJSON, 128,  "{\"error\":\"Real time app could not initialize the hardware\"}");
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, 128,  "{\"error\":\"Real time app could not initialize the hardware\"}");
     }
 
-    printf("\n\nSending to A7: %s\n",payloadPtr->payload.telemetryJSON);
+    printf("\n\nSending to A7: %s\n",payloadPtrOutgoing->payload.telemetryJSON);
 
     /* Write to the high level application, enqueue to mailbox */
-    EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK) + 1);
+    EnqueueData(inbound, outbound, mbox_shared_buf_size, payloadPtrOutgoing, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
 }
 
 // Update this routine to initialize any hardware interfaces required by your implementation
