@@ -494,7 +494,7 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
         // 1. Read the attached sensors (or access data)
         // 2. Construct and send telemetry JSON ("newKey"; value, "newKey2": value2, . . . ) depending on the sensor/cloud implementation
         snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE, "{\"sampleRtKeyString\":\"%s\", \"sampleRtKeyInt\":%d, \"sampleRtKeyFloat\":%.3lf}", 
-                                                                        "AvnetKnowsIoT App1", 
+                                                                        "AvnetKnowsIoT App2", 
                                                                         (int)(rand()%100),
                                                                         ((float)rand()/(float)(RAND_MAX)) * 100);
 
