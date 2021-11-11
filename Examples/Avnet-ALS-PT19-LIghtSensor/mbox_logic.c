@@ -474,7 +474,6 @@ void read_sensor_thread(ULONG thread_input)
                 
                 // Update the global variable with the new average
                 sensorDataAverage = runningTotal/DATA_ARRAY_SIZE;              
-
             }
         }    
         // Sleep
@@ -580,7 +579,7 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
         //printf("ALSPT19: Ambient Light[Lux] : %.2f\r\n", light_sensor);
 
         // Construct the telemetry response
-        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"light_intensity\": %.2f}",light_sensor);
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"lightLux\": %.2f}",light_sensor);
     }
     else{
                         
