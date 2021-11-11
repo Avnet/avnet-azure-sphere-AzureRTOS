@@ -9,7 +9,7 @@
 cmake_minimum_required (VERSION 3.11)
 
 # Configurations
-project(AvnetGenericRTApp C ASM)
+project(AvnetGenericRTApp1 C ASM)
 SET(CMAKE_ASM_FLAGS "-mcpu=cortex-m4")
 azsphere_configure_tools(TOOLS_REVISION "20.07")
 add_compile_definitions(OSAI_AZURE_RTOS)
