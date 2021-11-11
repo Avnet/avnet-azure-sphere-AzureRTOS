@@ -1,12 +1,12 @@
 {
   "SchemaVersion": 1,
-  "Name": "AvnetLPS22HH-V1",
-  "ComponentId": "f7ffd0a0-48d7-4b29-926f-ef1ef2d126a6",
+  "Name": "AvnetLPS22HH-V1-RTApp2",
+  "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b002",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {
     "I2cMaster": [ "ISU2" ],
-    "AllowedApplicationConnections": [ "06e116bd-e3af-4bfe-a0cb-f1530b8b91ab" ]
+    "AllowedApplicationConnections": [ "b8f5931e-173a-40f5-a4f8-3d98240f53ec" ]
   },
   "ApplicationType": "RealTimeCapable"
 }
