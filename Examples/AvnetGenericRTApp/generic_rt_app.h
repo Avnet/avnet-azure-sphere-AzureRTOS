@@ -18,6 +18,16 @@ typedef enum __attribute__((packed))
 	IC_GENERIC_READ_SENSOR
 } INTER_CORE_CMD_SAMPLE;
 
+// Define the expected data structure. 
+typedef struct  __attribute__((packed))
+{
+	INTER_CORE_CMD_SAMPLE cmd;
+	uint32_t telemetrySendRate;
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////
+} IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT;
+
 typedef struct __attribute__((packed))
 {
 	INTER_CORE_CMD_SAMPLE cmd;
@@ -30,14 +40,3 @@ typedef struct __attribute__((packed))
 	float rawDataFloat;
 } IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL;
 
-
-// Define the expected data structure. 
-typedef struct  __attribute__((packed))
-{
-	INTER_CORE_CMD_SAMPLE cmd;
-	uint32_t telemetrySendRate;
-	char telemetryJSON[JSON_STRING_MAX_SIZE];
-	////////////////////////////////////////////////////////////////////////////////////////
-	// Don't change the declarations above or the generic RTApp implementation will break //
-	////////////////////////////////////////////////////////////////////////////////////////
-} IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT;

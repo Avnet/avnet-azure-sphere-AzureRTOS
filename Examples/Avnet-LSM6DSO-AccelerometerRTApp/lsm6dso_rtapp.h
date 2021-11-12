@@ -26,6 +26,9 @@ typedef struct  __attribute__((packed))
 {
     INTER_CORE_CMD_LSM6DSO cmd;
     uint32_t telemtrySendRate;
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////   
     uint32_t sensorSampleRate;
 } IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT;
 

@@ -19,6 +19,16 @@ typedef enum __attribute__((packed))
 
 } INTER_CORE_CMD_GROVE_GPS;
 
+// Define the expected data structure. 
+typedef struct  __attribute__((packed))
+{
+	INTER_CORE_CMD_GROVE_GPS cmd;
+	uint32_t telemetrySendRate;
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////
+} IC_COMMAND_BLOCK_GROVE_GPS_HL_TO_RT;
+
 typedef struct __attribute__((packed))
 {
 	INTER_CORE_CMD_GROVE_GPS cmd;
@@ -35,13 +45,3 @@ typedef struct __attribute__((packed))
 } IC_COMMAND_BLOCK_GROVE_GPS_RT_TO_HL;
 
 
-// Define the expected data structure. 
-typedef struct  __attribute__((packed))
-{
-	INTER_CORE_CMD_GROVE_GPS cmd;
-	uint32_t telemetrySendRate;
-	char telemetryJSON[JSON_STRING_MAX_SIZE];
-	////////////////////////////////////////////////////////////////////////////////////////
-	// Don't change the declarations above or the generic RTApp implementation will break //
-	////////////////////////////////////////////////////////////////////////////////////////
-} IC_COMMAND_BLOCK_GROVE_GPS_HL_TO_RT;

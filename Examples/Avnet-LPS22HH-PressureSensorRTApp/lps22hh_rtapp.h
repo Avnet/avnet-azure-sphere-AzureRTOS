@@ -25,6 +25,9 @@ typedef struct  __attribute__((packed))
 {
     INTER_CORE_CMD_LPS22HH cmd;
     uint32_t sensorSampleRate;
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////
 } IC_COMMAND_BLOCK_LPS22HH_HL_TO_RT;
 
 // Define the data structure that the real time app sends

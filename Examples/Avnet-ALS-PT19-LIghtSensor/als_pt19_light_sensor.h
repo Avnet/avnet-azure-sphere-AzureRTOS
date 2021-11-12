@@ -12,6 +12,9 @@ typedef enum   __attribute__((packed))
     IC_LIGHTSENSOR_HEARTBEAT,
 	IC_LIGHTSENSOR_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
 	IC_LIGHTSENSOR_SAMPLE_RATE,
+	/////////////////////////////////////////////////////////////////////////////////
+	// Don't change the enums above or the generic RTApp implementation will break //
+	/////////////////////////////////////////////////////////////////////////////////
   	IC_LIGHTSENSOR_READ_SENSOR, 
 
 } INTER_CORE_CMD_LIGHTSENSOR;
@@ -21,13 +24,19 @@ typedef struct  __attribute__((packed))
 {
     INTER_CORE_CMD_LIGHTSENSOR cmd;
     uint32_t sensorSampleRate;
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////
 } IC_COMMAND_BLOCK_ALS_PT19_HL_TO_RT;
 
 typedef struct  __attribute__((packed))
 {
     INTER_CORE_CMD_LIGHTSENSOR cmd;
     uint32_t sensorSampleRate;
-    char telemetryJSON[JSON_STRING_MAX_SIZE];    
+    char telemetryJSON[JSON_STRING_MAX_SIZE];  
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////
     uint32_t sensorData;
     double lightSensorLuxData;    
 } IC_COMMAND_BLOCK_ALS_PT19_RT_TO_HL;
