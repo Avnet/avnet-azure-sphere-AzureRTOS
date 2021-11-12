@@ -45,7 +45,7 @@
 #include "os_hal_adc.h"
 #include "als_pt19_light_sensor.h"
 #include "intercore_generic.h"
-#include <assert.h>
+ 
 
 // These ADC settings work for both of the Avnet Starter kits Rev1 and Rev2
 #define ADC_GPIO                41            /* ADC0 = GPIO41 */
@@ -261,8 +261,6 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
     // The thread loop
     while (true) {
-
-//        tx_thread_sleep(10);
 
         // Read the telemetry event flags, this call will block until one of the flags is set
         // Once the call returns, it will also clear the event flags.  We use the actual_flags variable
