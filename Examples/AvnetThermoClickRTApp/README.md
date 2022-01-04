@@ -1,4 +1,4 @@
-# Real time application information for AvnetGenericRTExample
+# Real time application information for reading the Thermo CLICK device
 
 # The appliation supports the following Avnet inter-core implementation messages . . .
 
@@ -36,10 +36,6 @@ To configure a high level DevX application to use this binary ...
       /****************************************************************************************
       * Inter Core Bindings
       *****************************************************************************************/
-      IC_COMMAND_BLOCK_THERMO_CLICK_RT_APP ic_control_block_generic = {.cmd = IC_READ_SENSOR,
-                                                                  .rawData8bit = 0,
-                                                                  .rawDataFloat = 0.0,
-                                                                  .sensorSampleRate = 0};
 
       #define RTAPP1_COMPONENT_ID "f6768b9a-e086-4f5a-8219-5ffe9684b001"
 
@@ -110,66 +106,9 @@ To configure a high level DevX application to use this binary ...
 
 `"partnerComponents": [ "f6768b9a-e086-4f5a-8219-5ffe9684b001" ]`
 
-# Configuring the Avnet Default High Level application to use this example (Avnet Default Sample)
-To configure the high level application to use this binary ...
-
-Include the interface definition in the m4_support.c 4mArray[] definition
-
-    {
-        .m4Name="AvnetGenericRTApp",
-        .m4RtComponentID="f6768b9a-e086-4f5a-8219-5ffe9684b001",
-        .m4InitHandler=genericM4Init,
-        .m4Handler=genericM4Handler,
-        .m4CleanupHandler=genericM4Cleanup,
-        .m4TelemetryHandler=genericM4RequestTelemetry,
-        .m4InterfaceVersion=V0
-    }
-   
-* Update the app_manifest.json file with the real time application's ComponentID
-
-`"AllowedApplicationConnections": [ "f6768b9a-e086-4f5a-8219-5ffe9684b001" ],`
-
-* Update the launch.vs.json  file with the real time application's ComponentID
-
-`"partnerComponents": [ "f6768b9a-e086-4f5a-8219-5ffe9684b001" ]`
-
-* Update the .vscode\launch.json  file with the real time application's ComponentID
-
-`"partnerComponents": [ "f6768b9a-e086-4f5a-8219-5ffe9684b001" ]`
-
-* Include the raw data handler in your high level application in m4_support.c
-
-    /// <summary>
-    ///  referenceRawDataHandler()
-    ///
-    /// This handler is called when the high level application receives a raw data read response from the
-    /// AvnetGenericRT real time application.
-    ///
-    ///  This handler is included as a refeence for your own custom raw data handler.
-    ///
-    /// </summary>
-    void referenceRawDataHandler(void* msg){
-
-        // Define the expected data structure.  Note this struct came from the AvnetGroveGPS real time application code
-        typedef struct
-        {
-            INTER_CORE_CMD cmd;
-            uint32_t sensorSampleRate;
-            uint8_t rawData8bit;
-            float rawDataFloat; 
-        } IC_COMMAND_BLOCK_THERMO_CLICK_RT_APP;
-
-        IC_COMMAND_BLOCK_THERMO_CLICK_RT_APP *messageData = (IC_COMMAND_BLOCK_THERMO_CLICK_RT_APP*) msg;
-        printf("RX Raw Data: rawData8bit: %d, rawDataFloat: %.2f\n",
-              messageData->rawData8bit, messageData->rawDataFloat);
-
-        // Add message structure and logic to do something with the raw data from the 
-        // real time application
-}
-
 ## Application Manifest
 
-Note that high level apps and real time apps may not declare the same resources in their app_manifest.json files.  This real time application uses the following Azure Sphere resources, and is built to connect to the AvnetDefaultProject/HighLevelExampleApp application with ComponentID: 06e116bd-e3af-4bfe-a0cb-f1530b8b91ab.
+Note that high level apps and real time apps may not declare the same resources in their app_manifest.json files.  This real time application uses the following Azure Sphere resources, and is built to connect to the AvnetDefaultProject/HighLevelExampleApp application with ComponentID: b8f5931e-173a-40f5-a4f8-3d98240f53ec.
 
 {
   "SchemaVersion": 1,
