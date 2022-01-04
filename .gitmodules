@@ -19,3 +19,6 @@
 [submodule "Examples/Avnet-HTU21D-TempHumRTApp/threadx"]
 	path = Examples/Avnet-HTU21D-TempHumRTApp/threadx
 	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/AvnetThermoClickRTApp/threadx"]
+	path = Examples/AvnetThermoClickRTApp/threadx
+	url = https://github.com/azure-rtos/threadx
