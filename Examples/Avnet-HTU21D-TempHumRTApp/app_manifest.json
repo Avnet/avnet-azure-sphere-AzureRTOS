@@ -1,12 +1,12 @@
 {
   "SchemaVersion": 1,
-  "Name": "AvnetHTU21D-V1",
-  "ComponentId": "2b4d4b23-ee22-4877-a650-fda47b4e070e",
+  "Name": "AvnetAlsPt19_RTApp",
+  "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b001",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {
     "I2cMaster": [ "ISU2" ],
-    "AllowedApplicationConnections": []
+    "AllowedApplicationConnections": [ "b8f5931e-173a-40f5-a4f8-3d98240f53ec" ]
   },
   "ApplicationType": "RealTimeCapable"
 }

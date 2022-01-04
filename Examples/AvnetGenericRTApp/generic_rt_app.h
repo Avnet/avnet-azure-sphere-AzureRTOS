@@ -2,22 +2,41 @@
    Licensed under the MIT License. */
 #pragma once
 
+#include "intercore_generic.h"
+
 // Define the different messages IDs we can send to real time applications
 // If this enum is changed, it also needs to be changed for the high level application
 typedef enum __attribute__((packed))
 {
-	IC_UNKNOWN,
-		IC_HEARTBEAT,
-		IC_READ_SENSOR,
-		IC_READ_SENSOR_RESPOND_WITH_TELEMETRY,
-		IC_SET_SAMPLE_RATE
-} INTER_CORE_CMD;
+	IC_SAMPLE_UNKNOWN,
+	IC_SAMPLE_HEARTBEAT,
+	IC_SAMPLE_READ_SENSOR_RESPOND_WITH_TELEMETRY,
+	IC_SAMPLE_SET_SAMPLE_RATE,
+	/////////////////////////////////////////////////////////////////////////////////
+	// Don't change the enums above or the generic RTApp implementation will break //
+	/////////////////////////////////////////////////////////////////////////////////
+	IC_GENERIC_READ_SENSOR
+} INTER_CORE_CMD_SAMPLE;
+
+// Define the expected data structure. 
+typedef struct  __attribute__((packed))
+{
+	INTER_CORE_CMD_SAMPLE cmd;
+	uint32_t telemetrySendRate;
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////
+} IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT;
 
 typedef struct __attribute__((packed))
 {
-	INTER_CORE_CMD cmd;
+	INTER_CORE_CMD_SAMPLE cmd;
 	uint32_t sensorSampleRate;
+	char telemetryJSON[JSON_STRING_MAX_SIZE];
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Don't change the declarations above or the generic RTApp implementation will break //
+	////////////////////////////////////////////////////////////////////////////////////////
 	uint8_t rawData8bit;
 	float rawDataFloat;
-	char telemetryJSON[128];
-} IC_COMMAND_BLOCK_GENERIC_RT_APP;
+} IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL;
+
