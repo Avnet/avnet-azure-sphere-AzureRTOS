@@ -44,13 +44,13 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "grove_gps.h"
 #include "intercore_generic.h"
+#include "buildOptions.h"
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
 
 /* Configurations */
 // UART Code
-#define UART_PORT_NUM           OS_HAL_UART_ISU0
 #define UART_DATA_LEN           UART_DATA_8_BITS
 #define UART_PARITY             UART_NONE_PARITY
 #define UART_STOP_BIT           UART_STOP_1_BIT

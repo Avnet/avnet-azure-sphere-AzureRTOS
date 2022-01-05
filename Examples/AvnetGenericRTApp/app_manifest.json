@@ -1,7 +1,7 @@
 {
   "SchemaVersion": 1,
-  "Name": "AvnetGeneric_RTApp",
-  "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b001",
+  "Name": "AvnetGeneric_RTApp-App2-V1",
+  "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b002",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {
