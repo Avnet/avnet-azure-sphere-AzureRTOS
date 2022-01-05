@@ -9,7 +9,7 @@
 cmake_minimum_required (VERSION 3.11)
 
 # Configurations
-project(AvnetThermoClick-Rev1-Click1-App1-V1 C ASM)
+project(AvnetThermoClick-Rev1-Click1-App2-V1 C ASM)
 SET(CMAKE_ASM_FLAGS "-mcpu=cortex-m4")
 azsphere_configure_tools(TOOLS_REVISION "20.07")
 add_compile_definitions(OSAI_AZURE_RTOS)
