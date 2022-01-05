@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "Name": "AvnetAlsPt19_RTApp",
+  "Name": "AvnetHTU21dRTApp-App1-V1",
   "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b001",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],

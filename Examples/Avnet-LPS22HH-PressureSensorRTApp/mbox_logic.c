@@ -202,7 +202,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS LPS22HH V2 Pressure Sensor application ****\n");
+    printf("\n\n**** Avnet AzureRTOS LPS22HH V1 Pressure Sensor application ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time

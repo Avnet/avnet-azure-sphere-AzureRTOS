@@ -16,6 +16,7 @@
 #include "math.h"
 #include "os_hal_i2c.h"
 #include "tx_api.h"
+#include "buildOptions.h"
 
 // 1 tick = 10ms. It is configurable.
 #define MS_TO_TICK(ms)  ((ms) * (TX_TIMER_TICKS_PER_SECOND) / 100) 
