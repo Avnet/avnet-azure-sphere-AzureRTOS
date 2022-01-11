@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "intercore_generic.h"
+#define JSON_STRING_MAX_SIZE 128
 
 // Define the different messages IDs we can send to real time applications
 // If this enum is changed, it also needs to be changed for the high level application

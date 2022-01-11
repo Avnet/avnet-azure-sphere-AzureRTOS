@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "intercore_generic.h"
+#define JSON_STRING_MAX_SIZE 128
 
 // Define the different messages IDs we can send to real time applications
 // If this enum is changed, it also needs to be changed for the high level application
@@ -16,7 +16,7 @@ typedef enum   __attribute__((packed))
 	/////////////////////////////////////////////////////////////////////////////////
 	// Don't change the enums above or the generic RTApp implementation will break //
 	/////////////////////////////////////////////////////////////////////////////////
-    IC_TEMPHUM_READ_TEMP_HUM_SENSOR
+    IC_TEMPHUM_READ_SENSOR
 
 } INTER_CORE_CMD_TEMPHUM;
 

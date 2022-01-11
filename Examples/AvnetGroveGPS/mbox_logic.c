@@ -43,7 +43,6 @@
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
 #include "grove_gps.h"
-#include "intercore_generic.h"
 #include "buildOptions.h"
 
 // Add MT3620 constant

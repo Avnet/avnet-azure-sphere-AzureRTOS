@@ -88,7 +88,7 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 5;
+static UINT send_telemetry_thread_period = 0;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;

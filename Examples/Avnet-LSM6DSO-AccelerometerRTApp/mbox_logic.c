@@ -44,7 +44,6 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "lsm6dso_rtapp.h"
 #include "./IMU_lib/imu_temp_pressure.h"
-#include "intercore_generic.h"
 
 // 1 tick = 10ms. It is configurable.
 #define MS_TO_TICK(ms)  ((ms) * (TX_TIMER_TICKS_PER_SECOND) / 1000)
@@ -93,11 +92,11 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 0;
+static uint32_t send_telemetry_thread_period = 0;
 
 // Variable that defines how often the read sensor thread reads the LSM6DSO accelermonitor sensor
 // The default of 2 says that the thread will read the sensor 2 times a second. 
-static UINT sensor_read_thread_samples_per_second = 10;
+static uint32_t sensor_read_thread_samples_per_second = 2;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
@@ -221,7 +220,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS LSM6DSO V1 Accelerometer Sensor application ****\n");
+    printf("\n\n**** Avnet AzureRTOS LSM6DSO V1.1 Accelerometer Sensor application ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -320,8 +319,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 switch (payloadPtrIncomming->payload.cmd)
                 {
                     // If the high level application sends this command message, then it's requesting that 
-                    // this real time application read its sensors and return valid JSON telemetry.  Send up random
-                    // telemetry to exercise the interface.
+                    // this real time application read its sensors and return valid JSON telemetry.  
                     case IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
@@ -347,11 +345,11 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // a new sample rate for reading the sensor.
                     case IC_LSM6DSO_SET_SENSOR_SAMPLE_RATE:
 
-                        printf("Set the real time application sensor read period to %lu reads/second\n", payloadPtrOutgoing->payload.telemtrySendRate);
+                        printf("Set the real time application sensor read period to %lu reads/second\n", payloadPtrIncomming->payload.sensorSampleRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        sensor_read_thread_samples_per_second = payloadPtrOutgoing->payload.sensorSampleRate;
+                        sensor_read_thread_samples_per_second = payloadPtrIncomming->payload.sensorSampleRate;
 
                         // Wake up the sensor read thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_sensor_read);
@@ -465,7 +463,12 @@ void sensor_read_thread_entry(ULONG thread_input)
             tx_semaphore_put(&lsm6dsoDataSemaphore);
 
         }
-   
+
+        // Verify that the new sample count is not zero, if it is, default to 10 samples/second
+        if(sensor_read_thread_samples_per_second == 0){
+            sensor_read_thread_samples_per_second = 10;
+        }
+
         // Sleep the specified time
         tx_thread_sleep(MT3620_TIMER_TICKS_PER_SECOND/sensor_read_thread_samples_per_second);
     }

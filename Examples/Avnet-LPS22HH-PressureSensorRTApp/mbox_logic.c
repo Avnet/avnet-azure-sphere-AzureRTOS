@@ -44,7 +44,6 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "lps22hh_rtapp.h"
 #include "./IMU_lib/imu_temp_pressure.h"
-#include "intercore_generic.h"
 
 // 1 tick = 10ms. It is configurable.
 #define MS_TO_TICK(ms)  ((ms) * (TX_TIMER_TICKS_PER_SECOND) / 1000)

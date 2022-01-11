@@ -44,7 +44,6 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "htu21d_rtapp.h"
 #include "./HTU21D/htu21d.h"
-#include "intercore_generic.h"
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)

@@ -2,7 +2,7 @@
    Licensed under the MIT License. */
 #pragma once
 
-#include "intercore_generic.h"
+#define JSON_STRING_MAX_SIZE 128
 
 // Define the different messages IDs we can send to real time applications
 // If this enum is changed, it also needs to be changed for the high level application
@@ -15,7 +15,7 @@ typedef enum __attribute__((packed))
 	/////////////////////////////////////////////////////////////////////////////////
 	// Don't change the enums above or the generic RTApp implementation will break //
 	/////////////////////////////////////////////////////////////////////////////////
-	IC_GENERIC_READ_SENSOR
+	IC_SAMPLE_READ_SENSOR
 } INTER_CORE_CMD_SAMPLE;
 
 // Define the expected data structure. 
