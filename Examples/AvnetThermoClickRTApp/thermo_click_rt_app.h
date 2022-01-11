@@ -28,6 +28,6 @@ typedef struct  __attribute__((packed))
 {
     INTER_CORE_CMD_THERMO_CLICK cmd;
     uint32_t sensorSampleRate;
+    float temperature;
     char telemetryJSON[JSON_STRING_MAX_SIZE+1];
-	float temperature;
 } IC_COMMAND_BLOCK_THERMO_CLICK_RT_TO_HL;

@@ -1,7 +1,7 @@
 {
   "SchemaVersion": 1,
-  "Name": "AvnetLPS22HH-RTApp-App2-V1",
-  "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b002",
+  "Name": "AvnetLPS22HH-RTApp-App1-V1",
+  "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b001",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {

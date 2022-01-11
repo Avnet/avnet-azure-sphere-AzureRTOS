@@ -1,0 +1,2 @@
+# Azure Sphere Azure RTOS binaries
+Please refer to [this blog](https://community.element14.com/products/devtools/avnetboardscommunity/azure-sphere-starter-kits/b/blog/posts/plug-and-play-real-time-applications-on-azure-sphere) for details on using these binaries
