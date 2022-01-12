@@ -12,7 +12,7 @@ typedef enum __attribute__((packed))
 	IC_LSM6DSO_UNKNOWN, 
     IC_LSM6DSO_HEARTBEAT,
 	IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-	IC_LSM6DSO_SET_SAMPLE_RATE,
+	IC_LSM6DSO_SET_AUTO_TELEMETRY_RATE,
 	/////////////////////////////////////////////////////////////////////////////////
 	// Don't change the enums above or the generic RTApp implementation will break //
 	/////////////////////////////////////////////////////////////////////////////////
