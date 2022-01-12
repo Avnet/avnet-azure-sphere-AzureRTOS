@@ -335,6 +335,8 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         // between reading sensors/sending telemetry
                         send_telemetry_thread_period = payloadPtrIncomming->payload.telemtrySendRate;
 
+                        // Echo back the new period to the high level application
+                        payloadPtrOutgoing->payload.telemtrySendRate = send_telemetry_thread_period;
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
 
