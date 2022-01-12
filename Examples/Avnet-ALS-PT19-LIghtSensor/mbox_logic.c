@@ -44,8 +44,6 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "os_hal_adc.h"
 #include "als_pt19_light_sensor.h"
-#include "intercore_generic.h"
- 
 
 // These ADC settings work for both of the Avnet Starter kits Rev1 and Rev2
 #define ADC_GPIO                41            /* ADC0 = GPIO41 */
@@ -329,13 +327,16 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_LIGHTSENSOR_SAMPLE_RATE:
+                    case IC_LIGHTSENSOR_SET_AUTO_TELEMETRY_RATE:
 
-                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtrIncomming->payload.sensorSampleRate);
+                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtrIncomming->payload.telemtrySendRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        send_telemetry_thread_period = payloadPtrIncomming->payload.sensorSampleRate;
+                        send_telemetry_thread_period = payloadPtrIncomming->payload.telemtrySendRate;
+
+                        // Copy the new value into the response messge
+                        payloadPtrOutgoing->payload.telemtrySendRate = payloadPtrIncomming->payload.telemtrySendRate;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
