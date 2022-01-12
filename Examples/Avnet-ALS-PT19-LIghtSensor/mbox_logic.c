@@ -342,7 +342,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_COMMAND_BLOCK_ALS_PT19_RT_TO_HL)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
 
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
@@ -358,7 +358,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         printf("RealTime App sending LUX data: %.2f\n", payloadPtrOutgoing->payload.lightSensorLuxData);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
 
                     case IC_LIGHTSENSOR_HEARTBEAT:
@@ -368,7 +368,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         payloadPtrOutgoing = (IC_SHARED_MEMORY_BLOCK_RT_TO_HL*)mbox_local_buf;
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL)+1);
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
                     case IC_LIGHTSENSOR_UNKNOWN:
                     default:
