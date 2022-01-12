@@ -43,7 +43,6 @@
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
 #include "generic_rt_app.h"
-#include "intercore_generic.h"
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -303,13 +302,16 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_SAMPLE_SET_SAMPLE_RATE:
+                    case IC_SAMPLE_SET_AUTO_TELEMETRY_RATE:
 
                         printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtrIncomming->payload.telemetrySendRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
                         send_telemetry_thread_period = payloadPtrIncomming->payload.telemetrySendRate;
+
+                        // Copy the incomming value to the outbuffer
+                        payloadPtrOutgoing->payload.telemtrySendRate = send_telemetry_thread_period;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
@@ -320,7 +322,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_GENERIC_READ_SENSOR:
+                    case IC_SAMPLE_READ_SENSOR:
 
                         if(hardwareInitOK){
 

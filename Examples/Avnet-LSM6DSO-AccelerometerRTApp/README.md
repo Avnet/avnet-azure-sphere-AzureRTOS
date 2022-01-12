@@ -67,11 +67,11 @@ dx_intercoreConnect(&intercore_lsm6dso_binding);
 * Include the handler to process interCore responses
 ```c
 /// <summary>
-/// lsm6dso_receive_msg_handler()
+/// receive_msg_handler()
 /// This handler is called when the high level application receives a response from the 
 /// Avnet LSM6DSO real time application.
 /// </summary>
-static void lsm6dso_receive_msg_handler(void *data_block, ssize_t message_length)
+static void receive_msg_handler(void *data_block, ssize_t message_length)
 {
 
     float gX = 0.0;
@@ -79,7 +79,7 @@ static void lsm6dso_receive_msg_handler(void *data_block, ssize_t message_length
     float gZ = 0.0;
 
     // Cast the data block so we can index into the data
-    IC_COMMAND_BLOCK_LSM6DSO *messageData = (IC_COMMAND_BLOCK_LSM6DSO*) data_block;
+    IC_COMMAND_BLOCK_LSM6DSO_RT_TO_HL *messageData = (IC_COMMAND_BLOCK_LSM6DSO_RT_TO_HL*) data_block;
 
     switch (messageData->cmd) {
         case IC_LSM6DSO_READ_SENSOR:
@@ -95,8 +95,7 @@ static void lsm6dso_receive_msg_handler(void *data_block, ssize_t message_length
             Log_Debug("IC_LSM6DSO_HEARTBEAT\n");
             break;
         case IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-            Log_Debug("IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY\n");
-            Log_Debug("%s\n", messageData->telemetryJSON);
+            Log_Debug("IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY: %s\n", messageData->telemetryJSON);
 
             // Verify we have an IoTHub connection and forward in incomming JSON telemetry data
             if(dx_isAzureConnected()){
@@ -105,61 +104,58 @@ static void lsm6dso_receive_msg_handler(void *data_block, ssize_t message_length
 
             }
             break;
-        case IC_LSM6DSO_SET_TELEMETRY_SEND_RATE:
-            Log_Debug("IC_LSM6DSO_SET_TELEMETRY_SEND_RATE\n");
+        case IC_LSM6DSO_SET_AUTO_TELEMETRY_RATE:
+            Log_Debug("IC_LSM6DSO_SET_TELEMETRY_SEND_RATE set to %d Seconds\n", messageData->telemtrySendRate);
             break;
         case IC_LSM6DSO_SET_SENSOR_SAMPLE_RATE:
-            Log_Debug("IC_LSM6DSO_SET_SENSOR_SAMPLE_RATE\n");
+            Log_Debug("IC_LSM6DSO_SET_SENSOR_SAMPLE_RATE set to %d Seconds\n\n", messageData->sensorSampleRate);
             break;
-        case IC_UNKNOWN:
+        case IC_LSM6DSO_UNKNOWN:
         default:
             break;
-        }
     }
 }
 ```
 * Add code send messages to the RTApp
 ```c
-//Code to read the sensor data in your application
+    // Code to request the real time app to automatically send telemetry data every 2 seconds
+    memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
 
-// reset inter-core block
-memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
+    ic_tx_block_sample.cmd = IC_LSM6DSO_SET_AUTO_TELEMETRY_RATE;
+    ic_tx_block_sample.telemtrySendRate = 2;
+    dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
+                        sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
 
-// Send read sensor message to realtime core app one
-ic_tx_block_sample.cmd = IC_LSM6DSO_READ_SENSOR;
-dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
-                    sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
+                       //Code to read the sensor data in your application
 
-// Code to request telemetry data 
+    // reset inter-core block
+    memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
 
-// reset inter-core block
-memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
+    // Send read sensor message to realtime core app one
+    ic_tx_block_sample.cmd = IC_LSM6DSO_READ_SENSOR;
+    dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
+                        sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
 
-// Send read sensor message to realtime core app one
-ic_tx_block_sample.cmd = IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY;
-dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
-                    sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
+    // Code to request telemetry data 
 
-// Code to set the sensor sample rate to 2 times a second
+    // reset inter-core block
+    memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
 
-// reset inter-core block
-memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
+    // Send read sensor message to realtime core app one
+    ic_tx_block_sample.cmd = IC_LSM6DSO_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
+                        sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
 
-// Send read sensor message to realtime core app one
-ic_tx_block_sample.cmd = IC_LSM6DSO_SET_SENSOR_SAMPLE_RATE;
-ic_tx_block_sample.sensorSampleRate = 2;
-dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
-                    sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
+    // Code to set the sensor sample rate to 2 times a second
 
-// Code to request the real time app to automatically send telemetry data every 5 seconds
+    // reset inter-core block
+    memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
 
-// Send read sensor message to realtime core app one
-memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
-
-ic_tx_block_sample.cmd = IC_LSM6DSO_SET_SAMPLE_RATE;
-ic_tx_block_sample.telemtrySendRate = 5;
-dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
-                    sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));
+    // Send read sensor message to realtime core app one
+    ic_tx_block_sample.cmd = IC_LSM6DSO_SET_SENSOR_SAMPLE_RATE;
+    ic_tx_block_sample.sensorSampleRate = 2;
+    dx_intercorePublish(&intercore_lsm6dso_binding, &ic_tx_block_sample,
+                        sizeof(IC_COMMAND_BLOCK_LSM6DSO_HL_TO_RT));     
 
 ```
 * Update the high level application app_manifest.json file with the real time application's ComponentID

@@ -303,19 +303,22 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_THERMO_CLICK_SAMPLE_RATE:
+                    case IC_THERMO_CLICK_SET_AUTO_TELEMETRY_RATE:
 
-                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtrIncomming->payload.sensorSampleRate);
+                        printf("Set the real time application sample rate set to %lu seconds\n", payloadPtrIncomming->payload.telemtrySendRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        send_telemetry_thread_period = payloadPtrIncomming->payload.sensorSampleRate;
+                        send_telemetry_thread_period = payloadPtrIncomming->payload.telemtrySendRate;
+
+                        // Echo the new interval back to the high level application
+                        payloadPtrOutgoing->payload.telemtrySendRate = send_telemetry_thread_period;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the new sample rate aleady in the buffer
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_COMMAND_BLOCK_THERMO_CLICK_RT_TO_HL));
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
 
                     // If the real time application sends this command, then the high level application is requesting
@@ -329,14 +332,14 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         printf("RealTime App sending sensor reading: %.2f\n", payloadPtrOutgoing->payload.temperature);
 
                         // Write to A7, enqueue to mailbox, note that the cmd byte already contains the IC_THERMO_CLICK_READ_SENSOR cmd
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_COMMAND_BLOCK_THERMO_CLICK_RT_TO_HL));
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
 
                     case IC_THERMO_CLICK_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
-                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_COMMAND_BLOCK_THERMO_CLICK_RT_TO_HL));
+                        EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
                     case IC_THERMO_CLICK_UNKNOWN:
                     default:

@@ -309,13 +309,16 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_LPS22HH_SET_SAMPLE_RATE:
+                    case IC_LPS22HH_SET_TELEMETRY_SEND_RATE:
 
-                        printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtrIncomming->payload.sensorSampleRate);
+                        printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtrIncomming->payload.telemtrySendRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
-                        send_telemetry_thread_period = payloadPtrIncomming->payload.sensorSampleRate;
+                        send_telemetry_thread_period = payloadPtrIncomming->payload.telemtrySendRate;
+
+                        // Echo back the new interval to the high level application
+                        payloadPtrOutgoing->payload.telemtrySendRate = send_telemetry_thread_period;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
