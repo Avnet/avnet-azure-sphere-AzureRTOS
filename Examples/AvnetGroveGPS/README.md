@@ -11,7 +11,7 @@ The Avnet Grove GPS AzureRTOS real time application reads UART data from a Grove
 * IC_GROVE_GPS_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
   * The application receives and parses NEMA GPS data, parses the NEMA data and returns properly formatted JSON
   * {"numSats":9,"fixQuality":2,"Tracking":{"lat":36.034810,"lon":-71.246187,"alt":-0.60}}
-* IC_GROVE_GPS_SET_SAMPLE_RATE
+* IC_GROVE_SET_AUTO_TELEMETRY_RATE
   * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
 
 # Sideloading the appliction binary
@@ -40,8 +40,8 @@ static void receive_msg_handler(void *data_block, ssize_t message_length);
 
 * Declare structues for the TX and RX memory buffers
 ```c
-IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT ic_tx_block_sample;
-IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL ic_rx_block_sample;
+IC_COMMAND_BLOCK_GROVE_GPS_HL_TO_RT ic_tx_block_sample;
+IC_COMMAND_BLOCK_GROVE_GPS_RT_TO_HL ic_rx_block_sample;
 ```
 
 * Add the binding to main.h
@@ -60,7 +60,7 @@ DX_INTERCORE_BINDING intercore_grove_gps_binding = {
 
 * Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
 ```c
-dx_intercoreConnect(&intercore_grove_binding);
+dx_intercoreConnect(&intercore_grove_gps_binding);
 ```
 * Include the handler to process interCore responses
 ```c
@@ -104,11 +104,10 @@ switch (messageData->cmd) {
         break;
     }
 }
-
 ```
 * Add code send messages to the RTApp
 ```c
-// code to read the light sensor data in your application
+// code to read the GPS data in your application
 memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_GROVE_GPS_HL_TO_RT));
 
 // Send read sensor message to realtime app
@@ -128,7 +127,7 @@ dx_intercorePublish(&intercore_grove_gps_binding, &ic_tx_block_sample,
 memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_GROVE_GPS_HL_TO_RT));
 
 // Send read sensor message to realtime app
-ic_tx_block_sample.cmd = IC_GROVE_GPS_SET_SAMPLE_RATE;
+ic_tx_block_sample.cmd = IC_GROVE_SET_AUTO_TELEMETRY_RATE;
 ic_tx_block_sample.telemetrySendRate = 5;
 dx_intercorePublish(&intercore_grove_gps_binding, &ic_tx_block_sample,
                         sizeof(IC_COMMAND_BLOCK_GROVE_GPS_HL_TO_RT));     

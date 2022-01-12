@@ -11,7 +11,7 @@ typedef enum __attribute__((packed))
 	IC_GROVE_GPS_UNKNOWN, 
     IC_GROVE_GPS_HEARTBEAT,
 	IC_GROVE_GPS_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-	IC_GROVE_GPS_SET_SAMPLE_RATE,
+	IC_GROVE_SET_AUTO_TELEMETRY_RATE,
 	/////////////////////////////////////////////////////////////////////////////////
 	// Don't change the enums above or the generic RTApp implementation will break //
 	/////////////////////////////////////////////////////////////////////////////////
@@ -32,7 +32,7 @@ typedef struct  __attribute__((packed))
 typedef struct __attribute__((packed))
 {
 	INTER_CORE_CMD_GROVE_GPS cmd;
-	uint32_t sensorSampleRate;
+	uint32_t telemetrySendRate;
 	char telemetryJSON[JSON_STRING_MAX_SIZE];
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Don't change the declarations above or the generic RTApp implementation will break //

@@ -485,13 +485,16 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_GROVE_GPS_SET_SAMPLE_RATE:
+                    case IC_GROVE_SET_AUTO_TELEMETRY_RATE:
 
                         printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtrIncomming->payload.telemetrySendRate);
 
                         // Set the global variable to the new interval, the read_sensors_thread will use this data to set it's delay
                         // between reading sensors/sending telemetry
                         send_telemetry_thread_period = payloadPtrIncomming->payload.telemetrySendRate;
+
+                        // Return the new interval in the outgoing message
+                        payloadPtrOutgoing->payload.telemetrySendRate = send_telemetry_thread_period;
 
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
