@@ -38,8 +38,8 @@ static void receive_msg_handler(void *data_block, ssize_t message_length);
 
 * Declare structues for the TX and RX memory buffers
 ```c
-IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT ic_tx_block_sample;
-IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL ic_rx_block_sample;
+IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT ic_tx_block;
+IC_COMMAND_BLOCK_TEMPHUM_RT_TO_HL ic_rx_block;
 ```
 
 * Add the binding to main.h
@@ -52,8 +52,8 @@ DX_INTERCORE_BINDING intercore_htu21d_binding = {
 .nonblocking_io = true,
 .rtAppComponentId = "f6768b9a-e086-4f5a-8219-5ffe9684b001",
 .interCoreCallback = receive_msg_handler,
-.intercore_recv_block = &ic_rx_block_sample,
-.intercore_recv_block_length = sizeof(IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL)};
+.intercore_recv_block = &ic_rx_block,
+.intercore_recv_block_length = sizeof(IC_COMMAND_BLOCK_TEMPHUM_RT_TO_HL)};
 ```
 
 * Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
@@ -89,8 +89,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
         Log_Debug("IC_TEMPHUM_HEARTBEAT\n");
         break;
     case IC_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-        Log_Debug("IC_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY\n");
-        Log_Debug("%s\n", messageData->telemetryJSON);
+        Log_Debug("IC_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY: %s\n", messageData->telemetryJSON);
         
         // Verify we have an IoTHub connection and forward in incomming JSON telemetry data
         if(dx_isAzureConnected()){
@@ -100,8 +99,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
         }
         break;
     case IC_TEMPHUM_SET_TELEMETRY_SEND_RATE:
-        Log_Debug("IC_TEMPHUM_SET_TELEMETRY_SEND_RATE\n");
-        Log_Debug("Auto Telemety set to %d seconds\n", messageData->telemtrySendRate);
+        Log_Debug("IC_TEMPHUM_SET_TELEMETRY_SEND_RATE: Auto Telemety set to %d seconds\n", messageData->telemtrySendRate);
         break;
     case IC_TEMPHUM_UNKNOWN:
     default:
@@ -112,28 +110,28 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
 * Add code send messages to the RTApp
 ```c
 // code to read the sensor data in your application
-memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
+memset(&ic_tx_block, 0x00, sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
 
 // Send read sensor message to realtime app
-ic_tx_block_sample.cmd = IC_TEMPHUM_READ_SENSOR;
-dx_intercorePublish(&intercore_htu21d_binding, &ic_tx_block_sample,
+ic_tx_block.cmd = IC_TEMPHUM_READ_SENSOR;
+dx_intercorePublish(&intercore_htu21d_binding, &ic_tx_block,
                         sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
 
 // Code to request telemetry data 
-memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
+memset(&ic_tx_block, 0x00, sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
 
 // Send read sensor message to realtime app
-ic_tx_block_sample.cmd = IC_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY;
-dx_intercorePublish(&intercore_htu21d_binding, &ic_tx_block_sample,
+ic_tx_block.cmd = IC_TEMPHUM_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+dx_intercorePublish(&intercore_htu21d_binding, &ic_tx_block,
                         sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
 
 // Code to request the real time app to automatically send telemetry data every 5 seconds
-memset(&ic_tx_block_sample, 0x00, sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
+memset(&ic_tx_block, 0x00, sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));
 
 // Send read sensor message to realtime app
-ic_tx_block_sample.cmd = IC_TEMPHUM_SET_SAMPLE_RATE;
-ic_tx_block_sample.telemtrySendRate = 5;
-dx_intercorePublish(&intercore_htu21d_binding, &ic_tx_block_sample,
+ic_tx_block.cmd = IC_TEMPHUM_SET_TELEMETRY_SEND_RATE;
+ic_tx_block.telemtrySendRate = 5;
+dx_intercorePublish(&intercore_htu21d_binding, &ic_tx_block,
                         sizeof(IC_COMMAND_BLOCK_TEMPHUM_HL_TO_RT));     
 ```
 * Update the high level application app_manifest.json file with the real time application's ComponentID

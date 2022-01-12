@@ -315,6 +315,9 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         // between reading sensors/sending telemetry
                         send_telemetry_thread_period = payloadPtrIncomming->payload.telemtrySendRate;
 
+                        // Send back the new value 
+                        payloadPtrOutgoing->payload.telemtrySendRate = send_telemetry_thread_period;
+
                         // Wake up the telemetry thread so that it will start using the new sample rate we just set
                         tx_thread_wait_abort(&thread_set_telemetry_flag);
 
@@ -324,7 +327,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_TEMPHUM_READ_TEMP_HUM_SENSOR:
+                    case IC_TEMPHUM_READ_SENSOR:
 
                         if(hardwareInitOK){
 
