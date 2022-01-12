@@ -6,7 +6,7 @@ This example can be used as a starting point for new Azure RTOS applications.  T
 2.  Create a new *.h file to define the commands and responses for your new application
 3.  Populate the ```initialize_hardware(void)``` function to initialize your new hardware interface
 3.  Identify the locations in the project where the application returns data to the high level application and add code to read your sensor(s)
-4.  If you need to continually read your sensors into global variables refer to the Grove GPS sample to see how that application implements an additional thread to read the sensor data into a global variable.
+4.  If you need to continually read your sensors into global variables refer to the LSM6DSO sample to see how that application implements an additional thread to read the sensor data into global variables.
 # The appliation supports the following Avnet inter-core implementation messages . . .
 
 * IC_SAMPLE_HEARTBEAT 
@@ -14,7 +14,7 @@ This example can be used as a starting point for new Azure RTOS applications.  T
 * IC_SAMPLE_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
   * The application generates random data returns properly formatted JSON
   * {"sampleRtKeyString":"AvnetKnowsIoT", "sampleRtKeyInt":84, "sampleRtKeyFloat":16.354}
-* IC_SAMPLE_SET_SAMPLE_RATE
+* IC_SAMPLE_SET_AUTO_TELEMETRY_RATE
   * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
 * IC_SAMPLE_READ_SENSOR
   * The application returns simulated data in the  rawData8bit and rawDatafloat response data fields
@@ -45,8 +45,8 @@ static void receive_msg_handler(void *data_block, ssize_t message_length);
 
 * Declare structues for the TX and RX memory buffers
 ```c
-IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT ic_tx_block_sample;
-IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL ic_rx_block_sample;
+IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT ic_tx_block;
+IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL ic_rx_block;
 ```
 
 * Add the binding to main.h
@@ -69,6 +69,7 @@ dx_intercoreConnect(&intercore_sample_binding);
 ```
 * Include the handler to process interCore responses
 ```c
+/// <summary>
 /// <summary>
 /// receive_msg_handler()
 /// This handler is called when the high level application receives a response from the 
@@ -99,8 +100,7 @@ switch (messageData->cmd) {
         Log_Debug("IC_HEARTBEAT\n");
         break;
     case IC_SAMPLE_READ_SENSOR_RESPOND_WITH_TELEMETRY:
-        Log_Debug("IC_READ_SENSOR_RESPOND_WITH_TELEMETRY\n");
-        Log_Debug("%s\n", messageData->telemetryJSON);
+        Log_Debug("IC_READ_SENSOR_RESPOND_WITH_TELEMETRY: %s\n", messageData->telemetryJSON);
         
         // Verify we have an IoTHub connection and forward in incomming JSON telemetry data
         if(dx_isAzureConnected()){
@@ -109,9 +109,8 @@ switch (messageData->cmd) {
 
         }
         break;
-    case IC_SAMPLE_SET_SAMPLE_RATE:
-        Log_Debug("IC_SET_SAMPLE_RATE\n");
-        Log_Debug("Auto Telemety set to %d seconds\n", messageData->sensorSampleRate);
+    case IC_SAMPLE_SET_AUTO_TELEMETRY_RATE:
+        Log_Debug("IC_SET_SAMPLE_RATE: Auto Telemety set to %d seconds\n", messageData->telemtrySendRate);
         break;
     case IC_SAMPLE_UNKNOWN:
     default:

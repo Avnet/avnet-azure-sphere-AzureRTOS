@@ -11,7 +11,7 @@ typedef enum __attribute__((packed))
 	IC_SAMPLE_UNKNOWN,
 	IC_SAMPLE_HEARTBEAT,
 	IC_SAMPLE_READ_SENSOR_RESPOND_WITH_TELEMETRY,
-	IC_SAMPLE_SET_SAMPLE_RATE,
+	IC_SAMPLE_SET_AUTO_TELEMETRY_RATE,
 	/////////////////////////////////////////////////////////////////////////////////
 	// Don't change the enums above or the generic RTApp implementation will break //
 	/////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@ typedef struct  __attribute__((packed))
 typedef struct __attribute__((packed))
 {
 	INTER_CORE_CMD_SAMPLE cmd;
-	uint32_t sensorSampleRate;
+	uint32_t telemtrySendRate;
 	char telemetryJSON[JSON_STRING_MAX_SIZE];
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Don't change the declarations above or the generic RTApp implementation will break //
