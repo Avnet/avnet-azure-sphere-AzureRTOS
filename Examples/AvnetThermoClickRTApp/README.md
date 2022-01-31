@@ -144,6 +144,12 @@ dx_intercorePublish(&intercore_thermo_click_binding, &ic_tx_block,
  ```JSON
 "partnerComponents": [ "f6768b9a-e086-4f5a-8219-5ffe9684b001" ]
  ```
+* Update the high level application's app_manifest.json  file with the ComponentID that the real-time application expects
+ ```JSON
+"ComponentId": "b8f5931e-173a-40f5-a4f8-3d98240f53ec",
+ ```
+
+
 
 ## Serial Debug
 By default the application opens the M4 debug port and sends debug data over that connection
