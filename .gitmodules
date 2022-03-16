@@ -22,3 +22,9 @@
 [submodule "Examples/AvnetThermoClickRTApp/threadx"]
 	path = Examples/AvnetThermoClickRTApp/threadx
 	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/AvnetLightRanger5-RTApp/threadx"]
+	path = Examples/AvnetLightRanger5-RTApp/threadx
+	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/AvnetLightRanger5-RTApp/mikroeInterface"]
+	path = Examples/AvnetLightRanger5-RTApp/mikroeInterface
+	url = https://github.com/Avnet/SphereMikroeInterface.git
