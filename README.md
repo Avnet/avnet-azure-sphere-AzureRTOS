@@ -68,28 +68,34 @@ Reads the [Avnet Starter Kit](https://www.avnet.com/shop/us/products/avnet-engin
 Reads temperature and humidity from a [MikroE Temp-Hum13 CLICK board](https://www.mikroe.com/temphum-13-click) based on the TE Connectivity HTU21D sensor
 ## AvnetThermoClickRTApp (01/04/22)
 Reads temperature data from a [MikroE Thermo CLICK board](https://www.mikroe.com/thermo-click) using a thermocoupler rated for high temperatures
+## AvnetLightranger5ClickRTApp (03/16/22)
+Reads distance range data from a [MikroE Lightranger5 CLICK board](https://www.mikroe.com/lightranger-5-click) using an AMS TMF8801 Time of Flight Sensor
 
 # Hardware Dependencies
 The table below identifies each example and the hardware resources it uses.  Two different appliations can not share the same hardware resource.  Use this table to determine which applications can co-exist on the same deployment.
 
 For example, I could create a deployment for a Rev1 Starter Kit that had a Grove GPS device connected to CLICK socket #1 (ISU0) and a Thermo CLICK board installed in CLICK socket #2 (ISU1).  But I could not have a deployment reading the on-board LPS22HH sensor (ISU2) and a HTU21D Temp-Hum13 CLICK board (ISU2) since they both need to claim and use ISU2.
 
-| Example Name          | ISU0 | ISU1 | ISU2 | ISU3 | ISU4 | ADC 0 | PWM 0 | PWM 1 | PWM 2 | 
-|-----------------------|------|------|------|------|------|-------|-------|-------|-------|
-| ASL-PT19 REV1         |      |      |      |      |      |   X   |       |       |       |
-| ASL-PT19 REV2         |      |      |      |      |      |   X   |       |       |       |
-| Generic App           |      |      |      |      |      |       |       |       |       |
-| Grove GPS REV1        |  X   |      |      |      |      |       |       |       |       |
-| Grove GPS REV2 Click1 |  X   |      |      |      |      |       |       |       |       |
-| Grove GPS REV2 Click2 |      |   X  |      |      |      |       |       |       |       |
-| LPS22HH REV1          |      |      |   X  |      |      |       |       |       |       |
-| LPS22HH REV2          |      |      |   X  |      |      |       |       |       |       |
-| LSM6DSO REV1          |      |      |   X  |      |      |       |       |       |       |
-| LSM6DSO REV2          |      |      |   X  |      |      |       |       |       |       |
-| HTU21D REV1           |      |      |   X  |      |      |       |       |       |       |
-| HTU21D REV2           |      |      |   X  |      |      |       |       |       |       |
-| Thermo CLICK REV1     |      |   X  |      |      |      |       |       |       |       |
-| Thermo CLICK REV2**   |   X  |      |      |      |      |       |       |       |       |
+| Example Name                   | ISU0 | ISU1 | ISU2 | ISU3 | ISU4 | ADC 0 | PWM 0 | PWM 1 | PWM 2 | 
+|--------------------------------|------|------|------|------|------|-------|-------|-------|-------|
+| ASL-PT19 REV1                  |      |      |      |      |      |   X   |       |       |       |
+| ASL-PT19 REV2                  |      |      |      |      |      |   X   |       |       |       |
+| Generic App                    |      |      |      |      |      |       |       |       |       |
+| Grove GPS REV1                 |  X   |      |      |      |      |       |       |       |       |
+| Grove GPS REV2 Click1          |  X   |      |      |      |      |       |       |       |       |
+| Grove GPS REV2 Click2          |      |   X  |      |      |      |       |       |       |       |
+| LPS22HH REV1                   |      |      |   X  |      |      |       |       |       |       |
+| LPS22HH REV2                   |      |      |   X  |      |      |       |       |       |       |
+| LSM6DSO REV1                   |      |      |   X  |      |      |       |       |       |       |
+| LSM6DSO REV2                   |      |      |   X  |      |      |       |       |       |       |
+| HTU21D REV1                    |      |      |   X  |      |      |       |       |       |       |
+| HTU21D REV2                    |      |      |   X  |      |      |       |       |       |       |
+| Thermo CLICK REV1              |      |   X  |      |      |      |       |       |       |       |
+| Thermo CLICK REV2**            |   X  |      |      |      |      |       |       |       |       |
+| Lightranger5 CLICK Rev1        |      |   X  |  X   |      |      |       |       |       |       | 
+| Lightranger5 CLICK Rev2 Click1 |      |   X  |  X   |      |      |       |       |       |       | 
+| Lightranger5 CLICK Rev2 Click2 |  X   |      |  X   |      |      |       |       |       |       | 
+
 
 ** The Avnet Starter Kit REV2 board only supports the Thermo Click in click socket #1 
 
