@@ -1,12 +1,12 @@
 {
   "SchemaVersion": 1,
-  "Name": "AvnetLightranger5Click_RTApp-App1-V1",
+  "Name": "AvnetLightRanger5Click-Rev1-Click2-Workshop-V1",
   "ComponentId": "f6768b9a-e086-4f5a-8219-5ffe9684b001",
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {
     "I2cMaster": ["ISU2"],
-    "Gpio": [32, 34, 35, 29],
+    "Gpio": [35],
     "AllowedApplicationConnections": [ "b8f5931e-173a-40f5-a4f8-3d98240f53ec" ]
   },
   "ApplicationType": "RealTimeCapable"

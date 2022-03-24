@@ -124,11 +124,7 @@ int getRange(void);
 static lightranger5_t lightranger5;
 static uint8_t status_old = 255;
 static uint8_t status;
-#ifdef CALIBRATION_DATA_HARDCODED
-static uint8_t factory_calib_data[ 14 ] =  { 0x71, 0x56, 0x00, 0x33, 0x09, 0x00, 0x0A, 0x94, 0x0F, 0x1F, 0x5E, 0xBC, 0x00, 0xFC};
-#else
 static uint8_t factory_calib_data[ 14 ];
-#endif
 static uint8_t tmf8801_algo_state[ 11 ] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 static uint8_t command_data[ 9 ] = { 0x03, 0x23, 0x00, 0x00, 0x00, 0x64, 0xFF, 0xFF, 0x02 };
 static uint8_t appid_data;
@@ -271,7 +267,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                 // Verify we received a new message                
                 if (result == -1 || (mbox_local_buf_len < RESERVED_BYTES_IN_SHARED_MEMORY + COMPONENT_ID_LEN_IN_SHARED_MEMORY)) {
-                    printf("Message queue is empty!\n");
+                    //printf("Message queue is empty!\n");
                     // Set the flag, we've processed all the messages in the queue
                     queuedMessages = false;
                     continue;
@@ -292,7 +288,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 }
 
                 /* Print the received message.*/
-                mbox_print(mbox_local_buf, mbox_local_buf_len);
+                //mbox_print(mbox_local_buf, mbox_local_buf_len);
 
                 /* Process the command from the high level Application */
                 switch (payloadPtrIncomming->payload.cmd)
@@ -333,7 +329,9 @@ void tx_thread_mbox_entry(ULONG thread_input)
                             // Read the temperature
                             payloadPtrOutgoing->payload.range_mm = getRange();
 
-                            printf("RealTime App sending sensor reading: %dmm\n", payloadPtrOutgoing->payload.range_mm);
+                            //printf("RealTime App sending sensor reading: %dmm\n", payloadPtrOutgoing->payload.range_mm);
+                            printf("Range: %dmm\n", payloadPtrOutgoing->payload.range_mm);
+
 
                             // Write to A7, enqueue to mailbox, note that the cmd byte already contains the IC_LIGHTRANGER5_CLICK_READ_SENSOR cmd
                             EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
@@ -554,7 +552,6 @@ bool initialize_hardware(void) {
         return false;
     }
 
-#ifndef CALIBRATION_DATA_HARDCODED
     do {
         lightranger5_get_status( &lightranger5, &status );
 
@@ -577,11 +574,10 @@ bool initialize_hardware(void) {
     for ( uint8_t n_cnt = 0 ; n_cnt < 14 ; n_cnt++ ) {
         printf("0x%.2X, ", factory_calib_data[ n_cnt ] );
     }
-    
 
     printf("};\r\n" );
     printf("------------------------------\r\n" );
- #endif    
+    
     lightranger5_set_command( &lightranger5, LIGHTRANGER5_CMD_DL_CALIB_AND_STATE );
     lightranger5_set_factory_calib_data( &lightranger5, factory_calib_data );
     lightranger5_set_algorithm_state_data( &lightranger5, tmf8801_algo_state );
@@ -607,11 +603,6 @@ bool initialize_hardware(void) {
     } else {
         printf(" Result: 0x%X\r\n", appid_data );    
     }
-
-//    for(;;){
-//        printf(" Range: %d\n", getRange());
-//        Delay_ms(100);
-//    }
 
     return true;
 }
