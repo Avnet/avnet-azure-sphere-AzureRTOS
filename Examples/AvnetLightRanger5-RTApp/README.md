@@ -22,6 +22,8 @@ This application binary can be side loaded onto your device with the following c
      azsphere device sideload deploy --image-package ./AvnetLightRanger5Click_RTApp-App1-V1.imagepackage
 
 # Configuring a High Level application to use this example (DevX)
+There is a high level example that drives this real-time application [here](https://github.com/Avnet/AzureSphereDevX.Examples)
+
 To configure a high level DevX application to use this application ...
 
 * Copy ```lightranger5_click.h``` from the example repo into your project directory
