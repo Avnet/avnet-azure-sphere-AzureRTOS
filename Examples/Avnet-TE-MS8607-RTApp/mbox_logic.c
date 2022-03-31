@@ -30,7 +30,6 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "pht_click.h"
 #include "avnet_starter_kit_hw.h"
-//#include "lightranger5.h"
 #include "pht.h"
 #include "drv.h"
 
@@ -75,7 +74,7 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 0;
+static UINT send_telemetry_thread_period = 5;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
@@ -126,16 +125,6 @@ static pht_t pht;
 static float pressure;
 static float humidity;
 static float temperature;
-
-// LightRanger5 
-//static lightranger5_t lightranger5;
-//static uint8_t status_old = 255;
-//static uint8_t status;
-//static uint8_t factory_calib_data[ 14 ];
-//static uint8_t tmf8801_algo_state[ 11 ] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-//static uint8_t command_data[ 9 ] = { 0x03, 0x23, 0x00, 0x00, 0x00, 0x64, 0xFF, 0xFF, 0x02 };
-//static uint8_t appid_data;
-
 
 /* Define main entry point.  */
 void tx_main(void)
@@ -536,15 +525,10 @@ bool initialize_hardware(void) {
     // Enable the sleep if you neeed to set a breakpoint at startup...
     tx_thread_sleep(2000);
 
-    //lightranger5_cfg_t lightranger5_cfg;
-    //lightranger5_cfg_setup( &lightranger5_cfg );
-
     pht_cfg_t pht_cfg;  /**< Click config object. */
 
     // Click initialization.
     pht_cfg_setup( &pht_cfg );
-
-    //PHT_MAP_MIKROBUS( pht_cfg, MIKROBUS_1 );
 
     // Setup the pin mapping here
     pht_cfg.scl = MIKROBUS_SCL;
@@ -554,31 +538,11 @@ bool initialize_hardware(void) {
     pht_cfg.i2c_speed   = I2C_MASTER_SPEED_STANDARD;
     pht_cfg.i2c_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
 
-    // Initialize the configuration structure, these constants
-    // are defined in avnet_starter_kit_hw.h
-//    lightranger5_cfg.en =  MIKROBUS_CS;
-//    lightranger5_cfg.int_pin = HAL_PIN_NC; //MIKROBUS_INT;
-//    lightranger5_cfg.io0 = HAL_PIN_NC;// MIKROBUS_RST;
-//    lightranger5_cfg.io1 = HAL_PIN_NC; //MIKROBUS_PWM;
-//    lightranger5_cfg.scl = MIKROBUS_SCL;
-//    lightranger5_cfg.sda =  MIKROBUS_SCL;
-//    lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
-
     pht.slave_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
 
-
-//    lightranger5.en.pin = MIKROBUS_CS;
-//    lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
-//    lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
-//    lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
-//    lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
-    
-    //err_t init_flag = lightranger5_init( &lightranger5, &lightranger5_cfg );
     err_t init_flag = pht_init( &pht, &pht_cfg );
     if ( init_flag == I2C_MASTER_ERROR ) {
         printf(" Application Init Error. " );
-        printf(" Please, run program again... " );
-
         return false;
     }
     
@@ -592,163 +556,6 @@ bool initialize_hardware(void) {
     Delay_ms( 100 );
     printf("---------------------------- \r\n " );
 
-/*
-    lightranger5_default_cfg( &lightranger5 );
-    printf(" Application Task " );
-    Delay_ms( 100 );
-    
-    if ( !lightranger5_check_factory_calibration( &lightranger5 ) ) {
-        printf(" Factory calibration success." );
-    } else {
-        printf(" Factory calibration FAILED.\n" );
-        printf(" Please, run program again...\n" );
-
-        return false;
-    }
-
-    do {
-        lightranger5_get_status( &lightranger5, &status );
-
-        if ( status_old != status ) {
-            if ( status < LIGHTRANGER5_STATUS_OK ) {
-                display_status_no_error( );    
-            } else {
-                display_status_error( );   
-            }  
-            status_old = status;
-        }
-        Delay_ms( 250 );
-    } while ( status );
-    
-    lightranger5_get_factory_calib_data( &lightranger5, factory_calib_data );
-    
-    printf("------------------------------\r\n" );
-    printf(" factory_calib_data[ 14 ] =\r\n { " );
-    
-    for ( uint8_t n_cnt = 0 ; n_cnt < 14 ; n_cnt++ ) {
-        printf("0x%.2X, ", factory_calib_data[ n_cnt ] );
-    }
-
-    printf("};\r\n" );
-    printf("------------------------------\r\n" );
-    
-    lightranger5_set_command( &lightranger5, LIGHTRANGER5_CMD_DL_CALIB_AND_STATE );
-    lightranger5_set_factory_calib_data( &lightranger5, factory_calib_data );
-    lightranger5_set_algorithm_state_data( &lightranger5, tmf8801_algo_state );
-    lightranger5_set_command_data( &lightranger5, command_data );
-    lightranger5_get_status( &lightranger5, &status );
-        
-    if ( status_old != status ) {
-        if ( status < LIGHTRANGER5_STATUS_OK ) {
-            display_status_no_error( );    
-        } else {
-            display_status_error( );   
-        }  
-        status_old = status;
-    }
-    
-    lightranger5_get_currently_run_app( &lightranger5, &appid_data );
-    
-    if ( appid_data == LIGHTRANGER5_APPID_MEASUREMENT ) {
-        printf(" Measurement app running.\r\n" );
-    }
-    else if ( appid_data == LIGHTRANGER5_APPID_BOOTLOADER ) {
-        printf(" Bootloader running.\r\n" );
-    } else {
-        printf(" Result: 0x%X\r\n", appid_data );    
-    }
-*/
     return true;
-}
-/*
-void display_status_no_error ( void ) {
-    printf("\r\n STATUS : No error\r\n" );
-    
-    switch ( status ) {
-        case LIGHTRANGER5_STATUS_IDLE : {
-            printf(" Information that internal state machine is idling.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_DIAGNOSTIC : {
-            printf(" Information that internal state machine is in diagnostic mode.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_START : {
-            printf(" Internal state machine is in initialization phase.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_CALIBRATION : {
-            printf(" Internal state machine is in the calibration phase. \r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_LIGHTCOL : {
-            printf(" Internal state machine is performing HW measurements and running the proximity algorithm.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_ALGORITHM : {
-            printf(" Internal state machine is running the distance algorithm.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_STARTUP : {
-            printf(" Internal state machine is initializing HW and SW.\r\n" );
-            break;
-        }
-    }    
-}
 
-void display_status_error ( void ) {
-    printf("\r\n STATUS : Error\r\n" );
-    
-    switch ( status ) {
-        case LIGHTRANGER5_STATUS_VCSEL_PWR_FAIL : {
-            printf(" Eye safety check failed, VCSEL is disabled by HW circuit.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_VCSEL_LED_A_FAIL : {
-            printf(" Eye safety check failed for anode. VCSEL is disabled by HW circuit.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_VCSEL_LED_K_FAIL : {
-            printf(" Eye safety check failed for cathode. VCSEL is disabled by HW circuit.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_INVALID_PARAM : {
-            printf(" Internal program error. A parameter to a function call was out of range.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_INVALID_DEVICE : {
-            printf(" A status information that a measurement got interrupted.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_CALIB_ERROR : {
-            printf(" Electrical calibration failed. No two peaks found to calibrate.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_INVALID_COMMAND : {
-            printf(" Command was sent while the application was busy executing the previous command.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_INVALID_STATE : {
-            printf(" Internal program error.\r\n" );
-            break;
-        }
-        case LIGHTRANGER5_STATUS_ERR_ALGORITHM : {
-            printf(" Internal error in algorithm.\r\n" );
-            break;
-        }
-    }    
 }
-
-int getRange(void){
-
-    if ( lightranger5_check_data_ready( &lightranger5 ) == LIGHTRANGER5_DATA_IS_READY ) {
-        uint16_t distance_mm = lightranger5_measure_distance( &lightranger5 );
-        
-        if ( distance_mm ) {
-            return distance_mm;    
-        }    
-    }
-    return -1;
-}
-
-*/
