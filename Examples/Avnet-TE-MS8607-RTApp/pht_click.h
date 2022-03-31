@@ -9,12 +9,12 @@
 // If this enum is changed, it also needs to be changed for the high level application
 typedef enum
 {
-	IC_LIGHTRANGER5_CLICK_UNKNOWN,
-	IC_LIGHTRANGER5_CLICK_HEARTBEAT,
-	IC_LIGHTRANGER5_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
-	IC_LIGHTRANGER5_CLICK_SET_AUTO_TELEMETRY_RATE,
-	IC_LIGHTRANGER5_CLICK_READ_SENSOR
-} INTER_CORE_CMD_LIGHTRANGER5_CLICK;
+	IC_PHT_CLICK_UNKNOWN,
+	IC_PHT_CLICK_HEARTBEAT,
+	IC_PHT_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
+	IC_PHT_CLICK_SET_AUTO_TELEMETRY_RATE,
+	IC_PHT_CLICK_READ_SENSOR
+} INTER_CORE_CMD_PHT_CLICK;
 typedef uint8_t cmdType;
 
 // Define the expected data structure. 
@@ -25,7 +25,7 @@ typedef struct  __attribute__((packed))
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Don't change the declarations above or the generic RTApp implementation will break //
 	////////////////////////////////////////////////////////////////////////////////////////
-} IC_COMMAND_BLOCK_LIGHTRANGER5_CLICK_HL_TO_RT;
+} IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT;
 
 typedef struct  __attribute__((packed))
 {
@@ -35,5 +35,7 @@ typedef struct  __attribute__((packed))
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Don't change the declarations above or the generic RTApp implementation will break //
 	////////////////////////////////////////////////////////////////////////////////////////
-    int range_mm;
-} IC_COMMAND_BLOCK_LIGHTRANGER5_CLICK_RT_TO_HL;
+    float temp;
+	float hum;
+	float pressure;
+} IC_COMMAND_BLOCK_PHT_CLICK_RT_TO_HL;

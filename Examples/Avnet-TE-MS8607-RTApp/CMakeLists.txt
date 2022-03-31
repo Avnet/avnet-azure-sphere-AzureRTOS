@@ -9,7 +9,7 @@
 cmake_minimum_required (VERSION 3.11)
 
 # Configurations
-project(AvnetLightRanger5Click-Rev2-Click2-Workshop-V1 C ASM)
+project(AvnetPHTClick-Workshop-V1 C ASM)
 SET(CMAKE_ASM_FLAGS "-mcpu=cortex-m4")
 azsphere_configure_tools(TOOLS_REVISION "20.07")
 add_compile_definitions(OSAI_AZURE_RTOS)
@@ -42,7 +42,7 @@ add_executable(${PROJECT_NAME}
                 ./mbox_logic.c 
                 ./rtcoremain.c
                 ./tx_initialize_low_level.S
-                ./lightRanger5Click/src/lightranger5.c)
+                ./phtClick/src/pht.c)
 
 # Include Folders
 include_directories(${PROJECT_NAME} PUBLIC
@@ -51,7 +51,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
                             ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/inc
                             ./
                             ./mikroeInterface/inc
-                            ./lightRanger5Click/include)
+                            ./phtClick/include)
 
 # Libraries
 set(OSAI_AZURE_RTOS 1)

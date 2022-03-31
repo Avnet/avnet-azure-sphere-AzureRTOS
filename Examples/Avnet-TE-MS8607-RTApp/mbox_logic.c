@@ -28,9 +28,10 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "lightranger5_click.h"
+#include "pht_click.h"
 #include "avnet_starter_kit_hw.h"
-#include "lightranger5.h"
+//#include "lightranger5.h"
+#include "pht.h"
 #include "drv.h"
 
 // Add MT3620 constant
@@ -51,14 +52,14 @@ typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_LIGHTRANGER5_CLICK_HL_TO_RT payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_HL_TO_RT;
 
 typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_LIGHTRANGER5_CLICK_RT_TO_HL payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_PHT_CLICK_RT_TO_HL payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_RT_TO_HL;
 
 // Local buffer where we process data from/to the high level application
@@ -120,14 +121,20 @@ void display_status_no_error (void);
 void display_status_error (void);
 int getRange(void);
 
+// PHT Click
+static pht_t pht;
+static float pressure;
+static float humidity;
+static float temperature;
+
 // LightRanger5 
-static lightranger5_t lightranger5;
-static uint8_t status_old = 255;
-static uint8_t status;
-static uint8_t factory_calib_data[ 14 ];
-static uint8_t tmf8801_algo_state[ 11 ] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static uint8_t command_data[ 9 ] = { 0x03, 0x23, 0x00, 0x00, 0x00, 0x64, 0xFF, 0xFF, 0x02 };
-static uint8_t appid_data;
+//static lightranger5_t lightranger5;
+//static uint8_t status_old = 255;
+//static uint8_t status;
+//static uint8_t factory_calib_data[ 14 ];
+//static uint8_t tmf8801_algo_state[ 11 ] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+//static uint8_t command_data[ 9 ] = { 0x03, 0x23, 0x00, 0x00, 0x00, 0x64, 0xFF, 0xFF, 0x02 };
+//static uint8_t appid_data;
 
 
 /* Define main entry point.  */
@@ -295,14 +302,14 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 {
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry. 
-                    case IC_LIGHTRANGER5_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_PHT_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_LIGHTRANGER5_CLICK_SET_AUTO_TELEMETRY_RATE:
+                    case IC_PHT_CLICK_SET_AUTO_TELEMETRY_RATE:
 
                         printf("Set the real time application sample rate set to %lu seconds\n", payloadPtrIncomming->payload.telemtrySendRate);
 
@@ -323,28 +330,35 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // If the real time application sends this command, then the high level application is requesting
                     // raw data from the sensor(s).  In this case, he developer needs to understand 
                     // what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_LIGHTRANGER5_CLICK_READ_SENSOR:
+                    case IC_PHT_CLICK_READ_SENSOR:
 
                         if(hardwareInitOK){
-                            // Read the temperature
-                            payloadPtrOutgoing->payload.range_mm = getRange();
+                            // Read the sensor data
+                            pht_get_temperature_pressure ( &pht, &temperature, &pressure);
+                            pht_get_relative_humidity ( &pht, &humidity);
+
+                            payloadPtrOutgoing->payload.temp = temperature;
+                            payloadPtrOutgoing->payload.pressure = pressure;
+                            payloadPtrOutgoing->payload.hum = humidity;
+
+                            printf("temp: %.2fC, pressure: %.2f(units?), humidity: %.2f%%\n\r", temperature, pressure, humidity);
 
                             //printf("RealTime App sending sensor reading: %dmm\n", payloadPtrOutgoing->payload.range_mm);
-                            printf("Range: %dmm\n", payloadPtrOutgoing->payload.range_mm);
+                            //printf("Range: %dmm\n", payloadPtrOutgoing->payload.range_mm);
 
 
-                            // Write to A7, enqueue to mailbox, note that the cmd byte already contains the IC_LIGHTRANGER5_CLICK_READ_SENSOR cmd
+                            // Write to A7, enqueue to mailbox, note that the cmd byte already contains the IC_PHT_CLICK_READ_SENSOR cmd
                             EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         }
                         break;
 
-                    case IC_LIGHTRANGER5_CLICK_HEARTBEAT:
+                    case IC_PHT_CLICK_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
-                    case IC_LIGHTRANGER5_CLICK_UNKNOWN:
+                    case IC_PHT_CLICK_UNKNOWN:
                     default:
                         break;
                 }
@@ -486,12 +500,23 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     }
 
     // Set the response message ID
-    payloadPtrOutgoing->payload.cmd = IC_LIGHTRANGER5_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtrOutgoing->payload.cmd = IC_PHT_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
         
+        // Read the sensor data
+        pht_get_temperature_pressure(&pht, &temperature, &pressure);
+        pht_get_relative_humidity(&pht, &humidity);
+
+        payloadPtrOutgoing->payload.temp = temperature;
+        payloadPtrOutgoing->payload.pressure = pressure;
+        payloadPtrOutgoing->payload.hum = humidity;
+
+
+
         // Construct the telemetry response
-        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"rangeMm\": %d}", getRange());
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"temp\": %.2f, \"pressure\": %.2f, \"hum\": %.2f}", temperature, pressure, humidity);
+//        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"rangeMm\": %d}", getRange());
     
     }
     else{
@@ -511,27 +536,45 @@ bool initialize_hardware(void) {
     // Enable the sleep if you neeed to set a breakpoint at startup...
     tx_thread_sleep(2000);
 
-    lightranger5_cfg_t lightranger5_cfg;
-    lightranger5_cfg_setup( &lightranger5_cfg );
+    //lightranger5_cfg_t lightranger5_cfg;
+    //lightranger5_cfg_setup( &lightranger5_cfg );
+
+    pht_cfg_t pht_cfg;  /**< Click config object. */
+
+    // Click initialization.
+    pht_cfg_setup( &pht_cfg );
+
+    //PHT_MAP_MIKROBUS( pht_cfg, MIKROBUS_1 );
+
+    // Setup the pin mapping here
+    pht_cfg.scl = MIKROBUS_SCL;
+    pht_cfg.sda = MIKROBUS_SCL;
+
+    // Set the I2C interface specs here
+    pht_cfg.i2c_speed   = I2C_MASTER_SPEED_STANDARD;
+    pht_cfg.i2c_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
 
     // Initialize the configuration structure, these constants
     // are defined in avnet_starter_kit_hw.h
-    lightranger5_cfg.en =  MIKROBUS_CS;
-    lightranger5_cfg.int_pin = HAL_PIN_NC; //MIKROBUS_INT;
-    lightranger5_cfg.io0 = HAL_PIN_NC;// MIKROBUS_RST;
-    lightranger5_cfg.io1 = HAL_PIN_NC; //MIKROBUS_PWM;
-    lightranger5_cfg.scl = MIKROBUS_SCL;
-    lightranger5_cfg.sda =  MIKROBUS_SCL;
-    lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
+//    lightranger5_cfg.en =  MIKROBUS_CS;
+//    lightranger5_cfg.int_pin = HAL_PIN_NC; //MIKROBUS_INT;
+//    lightranger5_cfg.io0 = HAL_PIN_NC;// MIKROBUS_RST;
+//    lightranger5_cfg.io1 = HAL_PIN_NC; //MIKROBUS_PWM;
+//    lightranger5_cfg.scl = MIKROBUS_SCL;
+//    lightranger5_cfg.sda =  MIKROBUS_SCL;
+//    lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
+
+    pht.slave_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
 
 
-    lightranger5.en.pin = MIKROBUS_CS;
-    lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
-    lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
-    lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
-    lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
+//    lightranger5.en.pin = MIKROBUS_CS;
+//    lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
+//    lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
+//    lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
+//    lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
     
-    err_t init_flag = lightranger5_init( &lightranger5, &lightranger5_cfg );
+    //err_t init_flag = lightranger5_init( &lightranger5, &lightranger5_cfg );
+    err_t init_flag = pht_init( &pht, &pht_cfg );
     if ( init_flag == I2C_MASTER_ERROR ) {
         printf(" Application Init Error. " );
         printf(" Please, run program again... " );
@@ -539,6 +582,17 @@ bool initialize_hardware(void) {
         return false;
     }
     
+    printf("---------------------------- \r\n " );
+    printf(" Device reset \r\n" );
+    pht_reset( &pht );
+    Delay_ms( 100 );
+    printf("---------------------------- \r\n " );
+    printf(" Set Oversampling Ratio \r\n" );
+    pht_set_ratio( &pht, PHT_PT_CMD_RATIO_2048, PHT_PT_CMD_RATIO_2048);
+    Delay_ms( 100 );
+    printf("---------------------------- \r\n " );
+
+/*
     lightranger5_default_cfg( &lightranger5 );
     printf(" Application Task " );
     Delay_ms( 100 );
@@ -603,10 +657,10 @@ bool initialize_hardware(void) {
     } else {
         printf(" Result: 0x%X\r\n", appid_data );    
     }
-
+*/
     return true;
 }
-
+/*
 void display_status_no_error ( void ) {
     printf("\r\n STATUS : No error\r\n" );
     
@@ -696,3 +750,5 @@ int getRange(void){
     }
     return -1;
 }
+
+*/
