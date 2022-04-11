@@ -70,6 +70,8 @@ Reads temperature and humidity from a [MikroE Temp-Hum13 CLICK board](https://ww
 Reads temperature data from a [MikroE Thermo CLICK board](https://www.mikroe.com/thermo-click) using a thermocoupler rated for high temperatures
 ## AvnetLightranger5ClickRTApp (03/16/22)
 Reads distance range data from a [MikroE Lightranger5 CLICK board](https://www.mikroe.com/lightranger-5-click) using an AMS TMF8801 Time of Flight Sensor
+## AvnetPHTClickRTApp (4/11/22)
+Reads distance range data from a [MikroE PHT CLICK board](https://www.mikroe.com/pht-click) using a TE Connectivity MS8607 pressure, humidity and temperature sensor
 
 # Hardware Dependencies
 The table below identifies each example and the hardware resources it uses.  Two different appliations can not share the same hardware resource.  Use this table to determine which applications can co-exist on the same deployment.
@@ -95,7 +97,8 @@ For example, I could create a deployment for a Rev1 Starter Kit that had a Grove
 | Lightranger5 CLICK Rev1        |      |   X  |  X   |      |      |       |       |       |       | 
 | Lightranger5 CLICK Rev2 Click1 |      |   X  |  X   |      |      |       |       |       |       | 
 | Lightranger5 CLICK Rev2 Click2 |  X   |      |  X   |      |      |       |       |       |       | 
-
+| PHT Click REV1                 |      |      |   X  |      |      |       |       |       |       |
+| PHT Click REV2                 |      |      |   X  |      |      |       |       |       |       |
 
 ** The Avnet Starter Kit REV2 board only supports the Thermo Click in click socket #1 
 
