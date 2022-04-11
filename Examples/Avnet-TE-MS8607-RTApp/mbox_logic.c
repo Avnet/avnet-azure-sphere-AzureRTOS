@@ -74,7 +74,7 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 5;
+static UINT send_telemetry_thread_period = 0;
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
@@ -189,7 +189,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS Lightranger5 Click application V1 ****\n");
+    printf("\n\n**** Avnet AzureRTOS PHT Click application V1 ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -330,7 +330,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                             payloadPtrOutgoing->payload.pressure = pressure;
                             payloadPtrOutgoing->payload.hum = humidity;
 
-                            printf("temp: %.2fC, pressure: %.2f(units?), humidity: %.2f%%\n\r", temperature, pressure, humidity);
+                            printf("tempC: %.2fC, pressure: %.2f mbar, humidity: %.2f%%\n\r", temperature, pressure, humidity);
 
                             //printf("RealTime App sending sensor reading: %dmm\n", payloadPtrOutgoing->payload.range_mm);
                             //printf("Range: %dmm\n", payloadPtrOutgoing->payload.range_mm);
@@ -504,7 +504,7 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 
 
         // Construct the telemetry response
-        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"temp\": %.2f, \"pressure\": %.2f, \"hum\": %.2f}", temperature, pressure, humidity);
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"tempC\": %.2f, \"pressure\": %.2f, \"hum\": %.2f}", temperature, pressure, humidity);
 //        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"rangeMm\": %d}", getRange());
     
     }
