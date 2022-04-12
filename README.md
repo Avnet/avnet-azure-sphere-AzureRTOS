@@ -120,10 +120,11 @@ How to use these tables.  If your application uses ISU0, then all hardware resou
 9. Update the ```Project(AvnetGeneericRTApp C ASM)``` line with the name of your application
 10. From the command line, change the directory to the root of the example you cloned
 11. Add the threadX submodule to your new directory ```git submodule add https://github.com/azure-rtos/threadx Examples/<your new directory>/threadx```
-12. Open the .gitignore file in the root directory and add your new directory/out/* to the end of the file
-13. Implement your new application
-14. Check your new application into a branch
-15. When you're ready to publish your app to the repo open a Pull Request
+12. If your app uses the SphereMikroeInterface library, then add the mikroeInterface submodule to your new directory ```git submodule add https://github.com/Avnet/SphereMikroeInterface.git Examples/<your new directory>/mikroeInterface```
+13. Open the .gitignore file in the root directory and add your new directory/out/* to the end of the file
+14. Implement your new application
+15. Check your new application into a branch
+16. When you're ready to publish your app to the repo open a Pull Request
 
 # Thank you for your contribution!
  
