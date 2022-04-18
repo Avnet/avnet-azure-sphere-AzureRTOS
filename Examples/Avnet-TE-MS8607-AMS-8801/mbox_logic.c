@@ -28,7 +28,7 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "pht_click.h"
+#include "pht_lightranger5_clicks.h"
 #include "lightranger5.h"
 #include "avnet_starter_kit_hw.h"
 #include "pht.h"
@@ -52,14 +52,14 @@ typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_HL_TO_RT;
 
 typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_PHT_CLICK_RT_TO_HL payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_RT_TO_HL payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_RT_TO_HL;
 
 // Local buffer where we process data from/to the high level application
@@ -119,9 +119,9 @@ bool initialize_hardware(void);
 void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size);
 void display_status_no_error (void);
 void display_status_error (void);
-int getRange(void);
 
 // LightRanger5 
+int getRange(void);
 static lightranger5_t lightranger5;
 static uint8_t status_old = 255;
 static uint8_t status;
@@ -301,14 +301,14 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 {
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry. 
-                    case IC_PHT_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_PHT_LIGHTRANGER5_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_PHT_CLICK_SET_AUTO_TELEMETRY_RATE:
+                    case IC_PHT_LIGHTRANGER5_SET_AUTO_TELEMETRY_RATE:
 
                         printf("Set the real time application sample rate set to %lu seconds\n", payloadPtrIncomming->payload.telemtrySendRate);
 
@@ -329,9 +329,10 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // If the real time application sends this command, then the high level application is requesting
                     // raw data from the sensor(s).  In this case, he developer needs to understand 
                     // what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_PHT_CLICK_READ_SENSOR:
+                    case IC_PHT_LIGHTRANGER5_READ_SENSOR:
 
                         if(hardwareInitOK){
+
                             // Read the sensor data
                             pht_get_temperature_pressure ( &pht, &temperature, &pressure);
                             pht_get_relative_humidity ( &pht, &humidity);
@@ -342,28 +343,18 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                             printf("tempC: %.2fC, pressure: %.2f mbar, humidity: %.2f%%, range: %dmm\n\r", temperature, pressure, humidity, getRange());
 
-                           // payloadPtrOutgoing->payload.range_mm = getRange();
-
-                            //printf("RealTime App sending sensor reading: %dmm\n", payloadPtrOutgoing->payload.range_mm);
-                            //printf("Range: %dmm\n", getRange());
-
-
-                            //printf("RealTime App sending sensor reading: %dmm\n", payloadPtrOutgoing->payload.range_mm);
-                            //printf("Range: %dmm\n", payloadPtrOutgoing->payload.range_mm);
-
-
-                            // Write to A7, enqueue to mailbox, note that the cmd byte already contains the IC_PHT_CLICK_READ_SENSOR cmd
+                            // Write to A7, enqueue to mailbox, note that the cmd byte already contains the IC_PHT_LIGHTRANGER5_READ_SENSOR cmd
                             EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         }
                         break;
 
-                    case IC_PHT_CLICK_HEARTBEAT:
+                    case IC_PHT_LIGHTRANGER5_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
-                    case IC_PHT_CLICK_UNKNOWN:
+                    case IC_PHT_LIGHTRANGER5_UNKNOWN:
                     default:
                         break;
                 }
@@ -505,24 +496,27 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     }
 
     // Set the response message ID
-    payloadPtrOutgoing->payload.cmd = IC_PHT_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtrOutgoing->payload.cmd = IC_PHT_LIGHTRANGER5_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
         
         // Read the sensor data
         pht_get_temperature_pressure(&pht, &temperature, &pressure);
         pht_get_relative_humidity(&pht, &humidity);
-
+        
+        // Copy the sensor data into the outgoing payload structure
+        payloadPtrOutgoing->payload.range_mm = getRange();
         payloadPtrOutgoing->payload.temp = temperature;
         payloadPtrOutgoing->payload.pressure = pressure;
         payloadPtrOutgoing->payload.hum = humidity;
 
-
-
         // Construct the telemetry response
-        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"tempC\": %.2f, \"pressure\": %.2f, \"hum\": %.2f}", temperature, pressure, humidity);
-//        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  "{\"rangeMm\": %d}", getRange());
-    
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE,  
+                "{\"tempC\": %.2f, \"pressure\": %.2f, \"hum\": %.2f, \"range\": %d}",
+                payloadPtrOutgoing->payload.temp, 
+                payloadPtrOutgoing->payload.pressure,
+                payloadPtrOutgoing->payload.hum, 
+                payloadPtrOutgoing->payload.range_mm);
     }
     else{
                         
