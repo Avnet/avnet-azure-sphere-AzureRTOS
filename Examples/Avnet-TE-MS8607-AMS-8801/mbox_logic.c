@@ -340,8 +340,13 @@ void tx_thread_mbox_entry(ULONG thread_input)
                             payloadPtrOutgoing->payload.temp = temperature;
                             payloadPtrOutgoing->payload.pressure = pressure;
                             payloadPtrOutgoing->payload.hum = humidity;
+                            payloadPtrOutgoing->payload.range_mm = getRange();
 
-                            printf("tempC: %.2fC, pressure: %.2f mbar, humidity: %.2f%%, range: %dmm\n\r", temperature, pressure, humidity, getRange());
+                            printf("tempC: %.2fC, pressure: %.2f mbar, humidity: %.2f%%, range: %dmm\n\r", 
+                                payloadPtrOutgoing->payload.temp,
+                                payloadPtrOutgoing->payload.pressure,
+                                payloadPtrOutgoing->payload.hum,
+                                payloadPtrOutgoing->payload.range_mm);
 
                             // Write to A7, enqueue to mailbox, note that the cmd byte already contains the IC_PHT_LIGHTRANGER5_READ_SENSOR cmd
                             EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
