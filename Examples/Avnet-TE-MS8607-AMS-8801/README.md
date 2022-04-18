@@ -19,7 +19,7 @@ The Avnet TE-MS8607 + AMS-8801 AzureRTOS real time application reads I2C data fr
 This application binary can be side loaded onto your device with the following commands . . .
 
      azsphere device enable-development
-     azsphere device sideload deploy --image-package ./AvnetPHTClick-Workshop-V1.imagepackage
+     azsphere device sideload deploy --image-package ./AvnetPHT-LightRangerClickRTApp-App1-V1.imagepackage
 
 # Configuring a High Level application to use this example (DevX)
 There is a high level example that drives this real-time application [here](https://github.com/Avnet/AzureSphereDevX.Examples)
@@ -51,19 +51,20 @@ IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_RT_TO_HL ic_rx_block;
 /****************************************************************************************
  * Inter Core Bindings
  *****************************************************************************************/
-DX_INTERCORE_BINDING intercore_PHT_LIGHTRANGER5_binding = {
+DX_INTERCORE_BINDING intercore_pht_lightranger5_binding = {
     .sockFd = -1,
     .nonblocking_io = true,
     .rtAppComponentId = "f6768b9a-e086-4f5a-8219-5ffe9684b001",
     .interCoreCallback = receive_msg_handler,
     .intercore_recv_block = &ic_rx_block,
-    .intercore_recv_block_length = sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_RT_TO_HL)};
+    .intercore_recv_block_length = sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_RT_TO_HL)
+};
 ```
 
 * Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
 ```c
     // Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
-    dx_intercoreConnect(&intercore_PHT_LIGHTRANGER5_binding);
+    dx_intercoreConnect(&intercore_pht_lightranger5_binding);
 ```
 * Include the handler to process interCore responses
 ```c
@@ -102,7 +103,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
         case IC_PHT_LIGHTRANGER5_UNKNOWN:
         default:
             break;
-        }
+    }
 }
 ```
 * Add code to send messages to the RTApp
@@ -113,7 +114,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
 
     // Send read sensor message to realtime core app one
     ic_tx_block.cmd = IC_PHT_LIGHTRANGER5_READ_SENSOR;
-    dx_intercorePublish(&intercore_PHT_LIGHTRANGER5_binding, &ic_tx_block,
+    dx_intercorePublish(&intercore_pht_lightranger5_binding, &ic_tx_block,
                         sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT));
 
     // Code to request telemetry data 
@@ -122,7 +123,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
 
     // Send read sensor message to realtime core app one
     ic_tx_block.cmd = IC_PHT_LIGHTRANGER5_READ_SENSOR_RESPOND_WITH_TELEMETRY;
-    dx_intercorePublish(&intercore_PHT_LIGHTRANGER5_binding, &ic_tx_block,
+    dx_intercorePublish(&intercore_pht_lightranger5_binding, &ic_tx_block,
                         sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT));;
 
     // Code to request the real time app to automatically send telemetry data every 5 seconds
@@ -131,7 +132,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
     // Send read sensor message to realtime app
     ic_tx_block_sample.cmd = IC_PHT_LIGHTRANGER5_SET_AUTO_TELEMETRY_RATE;
     ic_tx_block_sample.telemetrySendRate = 5;
-    dx_intercorePublish(&intercore_PHT_LIGHTRANGER5_binding, &ic_tx_block_sample,
+    dx_intercorePublish(&intercore_pht_lightranger5_binding, &ic_tx_block_sample,
                             sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT));     
 ```
 * Update the high level application app_manifest.json file with the real time application's ComponentID
