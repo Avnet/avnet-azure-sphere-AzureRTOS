@@ -27,6 +27,7 @@
 
 #include "lightranger5.h"
 #include "tx_api.h"
+#include "tof_bin_image.h"
 
 // ---------------------------------------------- PRIVATE FUNCTION DECLARATIONS 
 
@@ -80,7 +81,9 @@ err_t lightranger5_init ( lightranger5_t *ctx, lightranger5_cfg_t *cfg ) {
     // It should contain the error status checking for every pin init.
 
     digital_out_init( &ctx->en, cfg->en );
+#ifdef INCUDE_APP_RESETS    
     digital_out_low(&ctx->en);
+#endif     
     digital_out_init(&ctx->io0, cfg->io0 );
     digital_out_init(&ctx->io1, cfg->io1 );
 
@@ -88,7 +91,9 @@ err_t lightranger5_init ( lightranger5_t *ctx, lightranger5_cfg_t *cfg ) {
 
     Delay_ms(50);
 
+#ifdef INCUDE_APP_RESETS
     digital_out_high(&ctx->en);
+#endif
 
     return I2C_MASTER_SUCCESS;
 }
@@ -191,8 +196,7 @@ err_t lightranger5_check_factory_calibration ( lightranger5_t *ctx ) {
     if ( reg_tmp != LIGHTRANGER5_EXPECTED_ID ) {
         return LIGHTRANGER5_ERROR;
     }
-    
-    lightranger5_device_reset( ctx );
+
     lightranger5_generic_read( ctx, LIGHTRANGER5_REG_ENABLE, &reg_tmp, 1 );
     if ( !( reg_tmp & LIGHTRANGER5_BIT_CPU_RDY ) ) {
         return LIGHTRANGER5_ERROR;
@@ -292,3 +296,178 @@ static void dev_reset_delay ( void ) {
 }
 
 // ------------------------------------------------------------------------- END
+
+
+void waitForReadyStatus(lightranger5_t* ctx){
+
+    uint8_t readBuf[4] = {0x00};
+        
+    do{
+
+        // Read back Status register (should read back as 00 00 FF )
+        // S 41 W 08 Sr 41 R A A N P 
+        lightranger5_generic_read (ctx, LIGHTRANGER5_REG_CMD_DATA7, readBuf, 3);
+
+    }
+    while ((readBuf[0] != 0x00) || (readBuf[1] != 0x00) || (readBuf[2] != 0xFF));
+}
+
+err_t lightranger5_update_firmware ( i2c_num isu, pin_name_t en, uint8_t new_i2c_address){
+    
+    uint8_t readBuf[64] = {0x00};
+    const uint8_t* imagePtr = NULL;
+    uint8_t reg_tmp;
+
+    lightranger5_t lightranger5;
+
+    lightranger5_cfg_t lightranger5_cfg;
+    lightranger5_cfg_setup( &lightranger5_cfg );
+
+    // Initialize the configuration structure, these constants
+    // are defined in avnet_starter_kit_hw.h
+    lightranger5_cfg.en =  en;
+    lightranger5_cfg.int_pin = HAL_PIN_NC;
+    lightranger5_cfg.io0 = HAL_PIN_NC;
+    lightranger5_cfg.io1 = HAL_PIN_NC;
+    lightranger5_cfg.scl = isu;
+    lightranger5_cfg.sda =  isu;
+    lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
+
+    lightranger5.en.pin = en;
+    lightranger5.int_pin.pin = HAL_PIN_NC;
+    lightranger5.io0.pin = HAL_PIN_NC;
+    lightranger5.io1.pin = HAL_PIN_NC;
+    lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
+
+    // Call the init function that will setup the i2c resource and the 
+    // enable gpio.  After this call the device is out of reset
+    err_t initStatus = lightranger5_init(&lightranger5, &lightranger5_cfg);
+    if(initStatus != I2C_MASTER_SUCCESS){
+        printf("Init failed!");
+    }
+
+    // Take the device out of reset
+    mtk_os_hal_gpio_set_output(en, OS_HAL_GPIO_DATA_HIGH);
+
+    tx_thread_sleep(100);
+
+    lightranger5_generic_read( &lightranger5, LIGHTRANGER5_REG_DEVICE_ID, &reg_tmp, 1 );
+    if ( reg_tmp != LIGHTRANGER5_EXPECTED_ID ) {
+        return LIGHTRANGER5_ERROR;
+    }
+    
+    lightranger5_device_reset( &lightranger5 );
+    lightranger5_generic_read( &lightranger5, LIGHTRANGER5_REG_ENABLE, &reg_tmp, 1 );
+    if ( !( reg_tmp & LIGHTRANGER5_BIT_CPU_RDY ) ) {
+        return LIGHTRANGER5_ERROR;
+    }
+
+    //Write a 0x1 to register 0xE0 (ENABLE)
+    //S 41 W E0 01 P
+    uint8_t enBuf[] = {0x01};
+    printf("Send Enable Command\n");
+    lightranger5_generic_write ( &lightranger5, LIGHTRANGER5_REG_ENABLE, enBuf, sizeof(enBuf));
+
+    // Poll register 0xE0 until the value 0x41 is read back (see section 4.1)
+    do{
+
+        lightranger5_generic_read (&lightranger5, LIGHTRANGER5_REG_ENABLE, readBuf, 1);
+
+    } while (readBuf[0] != 0x41);
+    // printf("Device is ready!\n");
+
+    // Read the bootloader app ID + version
+    //S 41 W 00 Sr 41 R A A A N P
+    // printf("Read Bootloader App ID and Version\n");
+    lightranger5_generic_read (&lightranger5, LIGHTRANGER5_REG_APPID, readBuf, 4);
+    // printf("Bootloader App ID and Version: 0x%0x 0x%0x 0x%0x, 0x%0x\n", readBuf[0], readBuf[1],readBuf[2],readBuf[3]);
+
+    waitForReadyStatus(&lightranger5);
+    
+    //Send DOWNLOAD_INIT
+    //S 41 W 08 14 01 29 C1 P
+    // printf("Send Download Init Command\n");
+    uint8_t initBuf[] = {0x14, 0x01, 0x29, 0xC1};
+    lightranger5_generic_write (&lightranger5, LIGHTRANGER5_REG_CMD_DATA7, initBuf, sizeof(initBuf));
+
+    waitForReadyStatus(&lightranger5);
+
+    // Set up address pointer to address 0x2000_0000, only lower 16-bits are used of address (Intel Hex
+    //    record :020000042000DA)
+    // S 41 W 08 43 02 00 00 BA P 
+    // printf("Send ADDR_RAM command for address 0\n");
+    uint8_t initAddrPtr[] = {0x43, 0x02, 0x00, 0x00, 0xBA};
+    lightranger5_generic_write (&lightranger5, LIGHTRANGER5_REG_CMD_DATA7, initAddrPtr, sizeof(initAddrPtr));
+
+    waitForReadyStatus(&lightranger5);
+
+    // Setup to send the image
+    imagePtr = tof_bin_image;
+    uint8_t writeBuffer[16 + 3] = {0x00};
+    uint8_t chkSum = 0;
+
+    // Send the image 16 bytes at a time until we're done
+    for(int i = 0; i < 0x2A5D/0x10; i++) {
+
+        writeBuffer[0] = 0x41;
+        writeBuffer[1] = 0x10;
+        chkSum = 0x10 + 0x41; 
+        for(int j = 0; j < 0x10; j++){
+            writeBuffer[j+2] = (uint8_t)*imagePtr++ ;
+            chkSum += (uint8_t)writeBuffer[j+2];
+        }
+
+        writeBuffer[18] = chkSum ^ 0xFF;
+
+        // Send W_RAM command with the current 16 bytes
+        lightranger5_generic_write (&lightranger5, LIGHTRANGER5_REG_CMD_DATA7, writeBuffer, 19);
+
+        waitForReadyStatus(&lightranger5);
+    }
+
+    // Send RAMREMAP_RESET command
+    // S 41 W 08 11 00 EE P
+    uint8_t ramremap_reset[] = {0x11, 0x00, 0xEE};
+    lightranger5_generic_write (&lightranger5, LIGHTRANGER5_REG_CMD_DATA7, ramremap_reset, sizeof(ramremap_reset));
+
+    do{
+
+        lightranger5_generic_read (&lightranger5, LIGHTRANGER5_REG_ENABLE, readBuf, 1);
+        tx_thread_sleep(10);
+
+    } while (readBuf[0] != 0x41);
+//    printf("Device is programmed!\n");
+
+    if(new_i2c_address != 0x00){
+      lightranger5_change_12c_address ( &lightranger5, new_i2c_address );  
+    }
+
+    return LIGHTRANGER5_OK;
+}
+
+err_t lightranger5_change_12c_address ( lightranger5_t* ctx, uint8_t new_i2c_address ){
+
+    // The host driver sends the following I²C string (assuming the device shall be reprogrammed 
+    //to 7-bit address 0x51 == upshifted by 1 to 0xA2) : S 41 W 0E A2 00 49 P
+    
+    // printf("Update the current TMF8801 device to use new I2C address 0x%x\n", new_i2c_address);
+    uint8_t changeI2cAddressCmd[3];
+
+    // Calculate the CheckSum for the command and write it into the 3rd array element
+    changeI2cAddressCmd[0] = new_i2c_address << 1;
+    changeI2cAddressCmd[1] = 0x00;
+    changeI2cAddressCmd[2] = 0x49;
+
+    lightranger5_generic_write (ctx, 0x0E, changeI2cAddressCmd, sizeof(changeI2cAddressCmd));
+
+    // The host driver sends the following I²C string (this I²C request might actually fail, if the 
+    // device has itself already reprogrammed to the new address – this depends on the internal 
+    // state of the device). S 41 W 10 ff P   
+    uint8_t newCmd[] = {0xFF};
+    lightranger5_generic_write (ctx, 0x10, newCmd, sizeof(newCmd));
+
+    // Now the device is reprogrammed. You can test to access it by sending the following string to 
+    // read out register 0xE0 ( the device will have the value 0x41 in this register): S 51 W e0 Sr 51 R A P
+
+    return LIGHTRANGER5_OK;
+}

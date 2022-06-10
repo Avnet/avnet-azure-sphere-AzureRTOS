@@ -65,3 +65,5 @@ Examples/Avnet-LPS22HH-PressureSensorRTApp/out/*
 Examples/Avnet-LSM6DSO-AccelerometerRTApp/out/*
 Examples/Avnet-HTU21D-TempHumRTApp/out/*
 Examples/AvnetThermoClickRTApp/out/*
+Examples/AvnetLightRanger5-RTApp/build/*
+Examples/AvnetLightRanger5-RTApp/out/*

@@ -511,6 +511,17 @@ bool initialize_hardware(void) {
     // Enable the sleep if you neeed to set a breakpoint at startup...
     tx_thread_sleep(2000);
 
+    // Open the EN pin for output
+    if( 0 != mtk_os_hal_gpio_set_direction( MIKROBUS_CS, OS_HAL_GPIO_DIR_OUTPUT)){
+        return false;
+    }
+    
+    // Drive the EN pin low to hold the device in reset
+    mtk_os_hal_gpio_set_output(MIKROBUS_CS, OS_HAL_GPIO_DATA_LOW);
+
+    // Call the routine that will update the firmware
+    lightranger5_update_firmware ( MIKROBUS_SCL, MIKROBUS_CS, 0x00);
+
     lightranger5_cfg_t lightranger5_cfg;
     lightranger5_cfg_setup( &lightranger5_cfg );
 

@@ -30,14 +30,14 @@
 
 #define MIKROBUS_SCL OS_HAL_I2C_ISU2
 #define MIKROBUS_SDA OS_HAL_I2C_ISU2
-#define MIKROBUS_CS OS_HAL_GPIO_32
+#define MIKROBUS_CS OS_HAL_GPIO_29
 
 #elif defined(CLICK_SOCKET_2)
 // Click socket #2 defines
 
 #define MIKROBUS_SCL OS_HAL_I2C_ISU2
 #define MIKROBUS_SDA OS_HAL_I2C_ISU2
-#define MIKROBUS_CS OS_HAL_GPIO_29
+#define MIKROBUS_CS OS_HAL_GPIO_32
 
 #else
 #error "Invalid board definition"
