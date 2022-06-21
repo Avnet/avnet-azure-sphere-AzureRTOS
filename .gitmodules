@@ -40,3 +40,9 @@
 [submodule "Examples/Avnet-TE-MS8607-AMS-8801/threadx"]
 	path = Examples/Avnet-TE-MS8607-AMS-8801/threadx
 	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/Avnet-SmartRetailShelf-PHT-Lightranger5-RTApp/threadx"]
+	path = Examples/Avnet-SmartRetailShelf-PHT-Lightranger5-RTApp/threadx
+	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/Avnet-SmartRetailShelf-PHT-Lightranger5-RTApp/mikroeInterface"]
+	path = Examples/Avnet-SmartRetailShelf-PHT-Lightranger5-RTApp/mikroeInterface
+	url = https://github.com/Avnet/SphereMikroeInterface.git
