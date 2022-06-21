@@ -29,8 +29,6 @@
 #include "tx_api.h"
 #include "tof_bin_image.h"
 
-//#define INCUDE_APP_RESETS
-
 // ---------------------------------------------- PRIVATE FUNCTION DECLARATIONS 
 
 /**
@@ -74,24 +72,13 @@ err_t lightranger5_init ( lightranger5_t *ctx, lightranger5_cfg_t *cfg, bool inc
     ctx->i2c.config.speed = cfg->i2c_speed;
     ctx->slave_address = cfg->i2c_address;
 
-//    ctx->slave_address = cfg->i2c_address;
-
-        // new code?
-//    ctx->i2c.config.addr = cfg->i2c_address;
-
     if ( i2c_master_open( &ctx->i2c, &i2c_cfg ) == I2C_MASTER_ERROR ) {
         return I2C_MASTER_ERROR;
     }
 
-//    if ( i2c_master_set_slave_address( &ctx->i2c, ctx->slave_address ) == I2C_MASTER_ERROR ) {
-//        return I2C_MASTER_ERROR;
-//    }
-
     if ( i2c_master_set_speed( &ctx->i2c, cfg->i2c_speed ) == I2C_MASTER_ERROR ) {
         return I2C_MASTER_ERROR;
     }
-
-    // It should contain the error status checking for every pin init.
 
     digital_out_init( &ctx->en, cfg->en );
 
@@ -113,8 +100,8 @@ err_t lightranger5_init ( lightranger5_t *ctx, lightranger5_cfg_t *cfg, bool inc
 }
 
 err_t lightranger5_default_cfg ( lightranger5_t *ctx ) {
-    // Click default configuration.
     
+    // Click default configuration.
     lightranger5_enable_device( ctx );
     dev_reset_delay( );
     
@@ -214,7 +201,7 @@ err_t lightranger5_check_factory_calibration ( lightranger5_t *ctx ) {
     do{
 
         Delay_10ms();
-        lightranger5_generic_read( ctx, LIGHTRANGER5_REG_ENABLE, &reg_tmp, 1 ); // Good case reads 0x41 here
+        lightranger5_generic_read( ctx, LIGHTRANGER5_REG_ENABLE, &reg_tmp, 1 ); 
     } while( !(reg_tmp & LIGHTRANGER5_BIT_CPU_RDY ));
 
     if ( !( reg_tmp & LIGHTRANGER5_BIT_CPU_RDY ) ) {
@@ -331,6 +318,8 @@ void waitForReadyStatus(lightranger5_t* ctx){
     while ((readBuf[0] != 0x00) || (readBuf[1] != 0x00) || (readBuf[2] != 0xFF));
 }
 
+// This function was written for the included image file.  If using a different image file
+// please review this funcation and make the necessary changes.
 err_t lightranger5_update_firmware ( i2c_num isu, pin_name_t en, uint8_t new_i2c_address){
     
     uint8_t readBuf[64] = {0x00};
@@ -364,10 +353,7 @@ err_t lightranger5_update_firmware ( i2c_num isu, pin_name_t en, uint8_t new_i2c
 
     // Call the init function that will setup the i2c resource and the 
     // enable gpio.  After this call the device is out of reset
-    err_t initStatus = lightranger5_init(&lr5_updateTarget, &lightranger5_cfg, true);
-//    if(initStatus != I2C_MASTER_SUCCESS){
-//        printf("FW Init failed!");
-//    }
+    lightranger5_init(&lr5_updateTarget, &lightranger5_cfg, true);
 
     mtk_os_hal_gpio_set_output(en, OS_HAL_GPIO_DATA_HIGH);
 

@@ -203,7 +203,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS PHT Click application V1 ****\n");
+    printf("\n\n**** Avnet AzureRTOS Smart Shelf application (PHT Click + 2 Lightranger5 Clicks) V1 ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -671,12 +671,6 @@ bool initialize_hardware(void) {
     lightranger5_cfg.sda =  CLICK1.SDA;
     lightranger5_cfg.i2c_address = 0x51;
 
-//    lightranger5_Shelf1.en.pin = CLICK1.CS;
-//    lightranger5_Shelf1.int_pin.pin = HAL_PIN_NC;
-//    lightranger5_Shelf1.io0.pin = HAL_PIN_NC;
-//    lightranger5_Shelf1.io1.pin = HAL_PIN_NC;
-//    lightranger5_Shelf1.slave_address = 0x51;
-
     // lightranger5 shelf1 init
     if(!initialize_lightranger5(&lightranger5_cfg, &lightranger5_Shelf1, false)){
         return false;
@@ -691,12 +685,6 @@ bool initialize_hardware(void) {
     lightranger5_cfg.scl = CLICK2.SCL;
     lightranger5_cfg.sda =  CLICK2.SDA;
     lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
-
-//    lightranger5_Shelf2.en.pin = CLICK2.CS;
-//    lightranger5_Shelf2.int_pin.pin = HAL_PIN_NC;
-//    lightranger5_Shelf2.io0.pin = HAL_PIN_NC;
-//    lightranger5_Shelf2.io1.pin = HAL_PIN_NC;
-//    lightranger5_Shelf2.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
 
     // Lightranger shelf2 init
     if(!initialize_lightranger5(&lightranger5_cfg, &lightranger5_Shelf2, false)){
@@ -735,7 +723,7 @@ bool initialize_hardware(void) {
 
 #endif 
 
-    pht_cfg_t pht_cfg;  /**< Click config object. */
+    pht_cfg_t pht_cfg; 
 
     // Click initialization.
     pht_cfg_setup( &pht_cfg );
@@ -764,7 +752,6 @@ bool initialize_hardware(void) {
     pht_set_ratio( &pht, PHT_PT_CMD_RATIO_2048, PHT_PT_CMD_RATIO_2048);
     Delay_ms( 100 );
     printf("---------------------------- \r\n " );
-
 
     return true;
 }
@@ -899,7 +886,6 @@ int getRange(lightranger5_t* lightranger5){
             return distance_mm;    
         }    
     }
-
 
     return -1;
 }
