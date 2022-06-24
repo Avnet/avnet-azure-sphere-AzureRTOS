@@ -46,3 +46,9 @@
 [submodule "Examples/Avnet-SmartRetailShelf-PHT-Lightranger5-RTApp/mikroeInterface"]
 	path = Examples/Avnet-SmartRetailShelf-PHT-Lightranger5-RTApp/mikroeInterface
 	url = https://github.com/Avnet/SphereMikroeInterface.git
+[submodule "Examples/AvnetGenericMikroeRTApp/threadx"]
+	path = Examples/AvnetGenericMikroeRTApp/threadx
+	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/AvnetGenericMikroeRTApp/mikroeInterface"]
+	path = Examples/AvnetGenericMikroeRTApp/mikroeInterface
+	url = https://github.com/Avnet/SphereMikroeInterface.git
