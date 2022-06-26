@@ -35,6 +35,10 @@ add_executable(${PROJECT_NAME}
                 ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_spim.c
                 ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_uart.c
                 ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_wdt.c
+                ./mikroeInterface/src/drv_digital_in.c
+                ./mikroeInterface/src/drv_digital_out.c
+                ./mikroeInterface/src/drv_i2c_master.c
+                ./mikroeInterface/src/drv.c                   
                 ./mbox_logic.c 
                 ./rtcoremain.c
                 ./tx_initialize_low_level.S
@@ -45,8 +49,9 @@ include_directories(${PROJECT_NAME} PUBLIC
                     ./)
 target_include_directories(${PROJECT_NAME} PUBLIC
                             ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/inc
-                            ./
-                            ./<newClickFolder>/include)
+                            ./<newClickFolder>/include
+                            ./mikroeInterface/inc
+                            ./)
 
 # Libraries
 set(OSAI_AZURE_RTOS 1)
