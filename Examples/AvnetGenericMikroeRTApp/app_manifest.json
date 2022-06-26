@@ -5,7 +5,9 @@
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {
-    "AllowedApplicationConnections": [ "b8f5931e-173a-40f5-a4f8-3d98240f53ec" ]
+    "AllowedApplicationConnections": [ "b8f5931e-173a-40f5-a4f8-3d98240f53ec" ],
+    "I2cMaster": [],
+    "Gpio": []
   },
   "ApplicationType": "RealTimeCapable"
 }

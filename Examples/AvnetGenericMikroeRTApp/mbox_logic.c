@@ -43,6 +43,8 @@
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
 #include "generic_rt_app.h"
+#include "avnet_starter_kit_hw.h"
+#include "<TODO: add newClickBoard.h here>"
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -88,7 +90,13 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 0;
+static UINT send_telemetry_thread_period = 0; // TODO change this to 2 to automaticlly call 
+                                              // readSensorsAndSendTelemetry() every 2 seconds.  
+                                              // We'll add code there to read the new click board 
+                                              // sensor(s).  Change it back to zero when you're ready 
+                                              // to interface this application with a high level application.
+                                              // This is an easy way to test our application and the hardware
+                                              // interface to the new click board.
 
 // Variable to track if the harware has been initialized
 static volatile bool hardwareInitOK = false;
@@ -131,7 +139,7 @@ void mbox_print(UCHAR *mbox_buf, UINT mbox_data_len);
 bool initialize_hardware(void);
 void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size);
 
-/* TO DO: Add MikroE Sample globals here */
+/* TODO: Add MikroE Sample globals here */
 
 
 /* Define main entry point.  */
@@ -279,9 +287,10 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                 // Setup two pointers to the mbox_local_buf that contains the incomming message.  We use two different pointers
                 // since the messsage/memory layout for incomming messages is different than outgoing messages.  However, we
-                // use the same mbox_local_buf memory for messages in and out.
-                IC_SHARED_MEMORY_BLOCK_HL_TO_RT *payloadPtrIncomming = (IC_SHARED_MEMORY_BLOCK_HL_TO_RT*)mbox_local_buf;
-                IC_SHARED_MEMORY_BLOCK_RT_TO_HL *payloadPtrOutgoing = (IC_SHARED_MEMORY_BLOCK_RT_TO_HL*)mbox_local_buf;
+                // use the same mbox_local_buf memory for messages in and out.  Don't modify the memory without reading any incomming
+                // data first!
+                IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT *payloadPtrIncomming = (IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT*)mbox_local_buf;
+                IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL *payloadPtrOutgoing = (IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL*)mbox_local_buf;
 
                 // Make a local copy of the message header.  This header contains the component ID of the high level
                 // application.  We need to add this header to messages being sent up to the high level application.
@@ -298,14 +307,14 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry.  Send up random
                     // telemetry to exercise the interface.
-                    case IC_SAMPLE_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_NEW_CLICK_NAME_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_SAMPLE_SET_AUTO_TELEMETRY_RATE:
+                    case IC_NEW_CLICK_NAME_SET_AUTO_TELEMETRY_RATE:
 
                         printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtrIncomming->payload.telemetrySendRate);
 
@@ -325,7 +334,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_SAMPLE_READ_SENSOR:
+                    case IC_NEW_CLICK_NAME_READ_SENSOR:
 
                         if(hardwareInitOK){
 
@@ -341,13 +350,13 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
 
-                    case IC_SAMPLE_HEARTBEAT:
+                    case IC_NEW_CLICK_NAME_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
-                    case IC_SAMPLE_UNKNOWN:
+                    case IC_NEW_CLICK_NAME_UNKNOWN:
                     default:
                         break;
                 }
@@ -490,9 +499,12 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     }
 
     // Set the response message ID
-    payloadPtrOutgoing->payload.cmd = IC_SAMPLE_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtrOutgoing->payload.cmd = IC_NEW_CLICK_NAME_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
+
+        // TODO: Update the call to snprintf() below to construct JSON Telemetry
+        // for your new sensor.
 
         // Construct the telemetry JSON that will be passed to the IoTHub.  In a real application the logic
         // would . . .
@@ -519,27 +531,32 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 // Update this routine to initialize any hardware interfaces required by your implementation
 bool initialize_hardware(void) {
     
-    // Enable the sleep if you neeed to set a breakpoint at startup...
-//    tx_thread_sleep(2000);
+    // Enable the sleep if you neeed to set a breakpoint in this routine ...
+    // tx_thread_sleep(2000);
     
-    /* TO DO: Add initialization code from MikroE example main.c here */
-
+    /* TODO: Add initialization code from MikroE example main.c here */
     // Remove all code related to the logger
 
     // Replace call to  <NewClickBoard>_MAP_MIKROBUS( cfg, MIKROBUS_1 ); 
     // with code similar to . . .
+
     // lightranger5_cfg.en =  CLICK2.CS;
     // lightranger5_cfg.int_pin = HAL_PIN_NC;
     // lightranger5_cfg.io0 = HAL_PIN_NC;
     // lightranger5_cfg.io1 = HAL_PIN_NC;
-    // lightranger5_cfg.scl = CLICK2.SCL;
+    // lightranger5_cfg.scl = HAL_PIN_NC;
     // lightranger5_cfg.sda =  CLICK2.SDA;
-    // lightranger5_cfg.i2c_address = 0x41;
+    // lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
+
+    // Also populate the <clickBoard_t object with pin details>
+
+    // lightranger5.en.pin = CLICK2.CS;
+    // lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
+    // lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
+    // lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
+    // lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
     
     // If the init code encounters an error: return false;
 
     return true;
-
-    // TO DO: Add example code to read sensor in new function copied from example main.c file
-    // Find locations in code that read the sensor and replace with a call to this new function
 }
