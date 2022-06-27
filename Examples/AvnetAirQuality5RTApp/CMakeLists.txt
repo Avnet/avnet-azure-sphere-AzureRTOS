@@ -42,14 +42,14 @@ add_executable(${PROJECT_NAME}
                 ./mbox_logic.c 
                 ./rtcoremain.c
                 ./tx_initialize_low_level.S
-                ./<newClickFolder>/src/<newClickDriver>.c)
+                ./airquality5/src/airquality5.c)
 
 # Include Folders
 include_directories(${PROJECT_NAME} PUBLIC
                     ./)
 target_include_directories(${PROJECT_NAME} PUBLIC
                             ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/inc
-                            ./<newClickFolder>/include
+                            ./airquality5/include
                             ./mikroeInterface/inc
                             ./)
 
