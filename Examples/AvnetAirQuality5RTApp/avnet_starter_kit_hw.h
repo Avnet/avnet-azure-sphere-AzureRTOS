@@ -37,8 +37,6 @@ click_socket_t CLICK2 = {.AN = HAL_PIN_NC,
                          .SDA = HAL_PIN_NC};
 
 
-#elif defined(REV2_BOARD)
-
 click_socket_t CLICK1 = {.AN = HAL_PIN_NC,
                          .RST = HAL_PIN_NC,
                          .CS = HAL_PIN_NC,
@@ -46,10 +44,10 @@ click_socket_t CLICK1 = {.AN = HAL_PIN_NC,
                          .MOSI = HAL_PIN_NC,
 
                          .PWM = HAL_PIN_NC,
-                         .INT = HAL_PIN_NC, // Example: OS_HAL_GPIO_5 (Add GPIO 5 to the app_manifest.json file!)
+                         .INT = OS_HAL_GPIO_5,
                          .RX = HAL_PIN_NC,
                          .TX = HAL_PIN_NC,
-                         .SCL = HAL_PIN_NC, // Example: OS_HAL_I2C_ISU2 (Add OS_HAL_I2C_ISU2 to the app_manifest.json file!))
+                         .SCL = OS_HAL_I2C_ISU2, // Example: OS_HAL_I2C_ISU2 (Add OS_HAL_I2C_ISU2 to the app_manifest.json file!))
                          .SDA = HAL_PIN_NC};
 
 // Click socket #2 defines
@@ -60,10 +58,10 @@ click_socket_t CLICK2 = {.AN = HAL_PIN_NC,
                          .MOSI = HAL_PIN_NC,
 
                          .PWM = HAL_PIN_NC,
-                         .INT = HAL_PIN_NC, // Example: OS_HAL_GPIO_5 (Add GPIO 5 to the app_manifest.json file!)
+                         .INT = OS_HAL_GPIO_34, // Example: OS_HAL_GPIO_5 (Add GPIO 5 to the app_manifest.json file!)
                          .RX = HAL_PIN_NC,
                          .TX = HAL_PIN_NC,
-                         .SCL = HAL_PIN_NC, // Example: OS_HAL_I2C_ISU2 (Add OS_HAL_I2C_ISU2 to the app_manifest.json file!))
+                         .SCL = OS_HAL_I2C_ISU2, // Example: OS_HAL_I2C_ISU2 (Add OS_HAL_I2C_ISU2 to the app_manifest.json file!))
                          .SDA = HAL_PIN_NC};
 
 #else // Invalid 
