@@ -340,12 +340,15 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                         if(hardwareInitOK){
 
-                            // Simulate reading data from a sensor with random numbers
-                            payloadPtrOutgoing->payload.rawData8bit = (int)(rand()%100);
-                            payloadPtrOutgoing->payload.rawDataFloat = ((float)rand()/(float)(RAND_MAX)) * 100;
+                            CO_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_CO );
 
-                            printf("RealTime App sending sensor reading 8-bit: %d\n", payloadPtrOutgoing->payload.rawData8bit);
-                            printf("RealTime App sending sensor reading float: %.2f\n", payloadPtrOutgoing->payload.rawDataFloat);
+                            NO2_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NO2 );
+                            NH3_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NH3 );
+                            CO_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_CO );
+
+                            payloadPtrOutgoing->payload.no2 = NO2_sensor_data;
+                            payloadPtrOutgoing->payload.nh3 = NH3_sensor_data;
+                            payloadPtrOutgoing->payload.co = CO_sensor_data;
                         }
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data

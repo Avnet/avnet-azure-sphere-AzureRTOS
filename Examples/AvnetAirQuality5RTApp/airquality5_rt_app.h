@@ -36,7 +36,8 @@ typedef struct __attribute__((packed))
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Don't change the declarations above or the generic RTApp implementation will break //
 	////////////////////////////////////////////////////////////////////////////////////////
-	uint8_t rawData8bit;
-	float rawDataFloat;
+	uint16_t no2;
+	uint16_t nh3;
+	uint16_t co;
 } IC_COMMAND_BLOCK_AIRQUALITY5_RT_TO_HL;
 
