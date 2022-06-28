@@ -45,7 +45,12 @@
             1. Remove all code related to the MikroE logger
             1. Change any calls to the logger to call printf() instead 
          1. Modify `readSensorsAndSendTelemetry()` to call mikroE library files to read your new sensor
-
+   1. Modify the intercore comms `generic_rt_app.h` file
+      1. Rename the file to reflect your click board `lightranger5_rt_app.h`
+      1. Update all *_NEW_CLICK_NAME_* with your click board name *_LIGHTRANGER5_ in both the new *_rt_app.h file and in mbox_logic.c
+   1. Update the JSON telemetry
+   2. Update the *_READ_SENSOR command handler code
+ 
 Now build and test your application to make sure you're new application is reading the sensor.  
 
 Once your application is reading trhe sensor update the application to interface with a high level application
