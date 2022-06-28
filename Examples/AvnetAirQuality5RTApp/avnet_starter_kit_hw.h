@@ -37,6 +37,8 @@ click_socket_t CLICK2 = {.AN = HAL_PIN_NC,
                          .SDA = HAL_PIN_NC};
 
 
+#elif defined(REV2_BOARD)
+// Click socket #2 defines
 click_socket_t CLICK1 = {.AN = HAL_PIN_NC,
                          .RST = HAL_PIN_NC,
                          .CS = HAL_PIN_NC,
