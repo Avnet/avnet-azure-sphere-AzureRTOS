@@ -44,7 +44,7 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "generic_rt_app.h"
 #include "avnet_starter_kit_hw.h"
-#include "<TODO: add newClickBoard.h here>"
+#include "airquality5.h"
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -64,15 +64,15 @@ typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_HL_TO_RT;
 
 typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL payload; // Pointer to the message data from the high level app
-} IC_SHARED_MEMORY_BLOCK_RT_TO_HL;
+    IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL payload; // Pointer to the message data from the high level app
+} IC_SHARED_MEMORY_BLOCK_RT_TO_HL;;
 
 // Local buffer where we process data from/to the high level application
 static UCHAR mbox_local_buf[MBOX_BUFFER_LEN_MAX];
@@ -90,7 +90,7 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 0; // TODO change this to 2 to automaticlly call 
+static UINT send_telemetry_thread_period = 2; // TODO change this to 2 to automaticlly call 
                                               // readSensorsAndSendTelemetry() every 2 seconds.  
                                               // We'll add code there to read the new click board 
                                               // sensor(s).  Change it back to zero when you're ready 
@@ -139,8 +139,11 @@ void mbox_print(UCHAR *mbox_buf, UINT mbox_data_len);
 bool initialize_hardware(void);
 void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size);
 
-/* TODO: Add MikroE Sample globals here */
-
+/* Airquality5 */
+static airquality5_t airquality5;
+static uint16_t NO2_sensor_data;
+static uint16_t NH3_sensor_data;
+static uint16_t CO_sensor_data;
 
 /* Define main entry point.  */
 void tx_main(void)
@@ -287,10 +290,9 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                 // Setup two pointers to the mbox_local_buf that contains the incomming message.  We use two different pointers
                 // since the messsage/memory layout for incomming messages is different than outgoing messages.  However, we
-                // use the same mbox_local_buf memory for messages in and out.  Don't modify the memory without reading any incomming
-                // data first!
-                IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT *payloadPtrIncomming = (IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT*)mbox_local_buf;
-                IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL *payloadPtrOutgoing = (IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL*)mbox_local_buf;
+                // use the same mbox_local_buf memory for messages in and out.
+                IC_SHARED_MEMORY_BLOCK_HL_TO_RT *payloadPtrIncomming = (IC_SHARED_MEMORY_BLOCK_HL_TO_RT*)mbox_local_buf;
+                IC_SHARED_MEMORY_BLOCK_RT_TO_HL *payloadPtrOutgoing = (IC_SHARED_MEMORY_BLOCK_RT_TO_HL*)mbox_local_buf;
 
                 // Make a local copy of the message header.  This header contains the component ID of the high level
                 // application.  We need to add this header to messages being sent up to the high level application.
@@ -503,17 +505,26 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 
     if(hardwareInitOK){
 
-        // TODO: Update the call to snprintf() below to construct JSON Telemetry
-        // for your new sensor.
+        CO_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_CO );
+        
+        NO2_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NO2 );
+        printf( " NO2 data: %d\r\n", NO2_sensor_data );
+        
+        NH3_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NH3 );
+        printf( " NH3 data: %d\r\n", NH3_sensor_data );
+        
+        CO_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_CO );
+        printf("  CO data: %d\r\n", CO_sensor_data );
+
 
         // Construct the telemetry JSON that will be passed to the IoTHub.  In a real application the logic
         // would . . .
         // 1. Read the attached sensors (or access data)
         // 2. Construct and send telemetry JSON ("newKey"; value, "newKey2": value2, . . . ) depending on the sensor/cloud implementation
-        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE, "{\"sampleRtKeyString\":\"%s\", \"sampleRtKeyInt\":%d, \"sampleRtKeyFloat\":%.3lf}", 
-                                                                        "AvnetKnowsIoT", 
-                                                                        (int)(rand()%100),
-                                                                        ((float)rand()/(float)(RAND_MAX)) * 100);
+//        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE, "{\"sampleRtKeyString\":\"%s\", \"sampleRtKeyInt\":%d, \"sampleRtKeyFloat\":%.3lf}", 
+//                                                                        "AvnetKnowsIoT", 
+//                                                                        (int)(rand()%100),
+//                                                                        ((float)rand()/(float)(RAND_MAX)) * 100);
 
     }
     else{
@@ -533,7 +544,7 @@ bool initialize_hardware(void) {
     
     // Enable the sleep if you neeed to set a breakpoint in this routine ...
     // tx_thread_sleep(2000);
-    
+
     /* TODO: Add initialization code from MikroE example main.c here */
     // Remove all code related to the logger
 
@@ -548,15 +559,20 @@ bool initialize_hardware(void) {
     // lightranger5_cfg.sda =  CLICK2.SDA;
     // lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
 
-    // Also populate the <clickBoard_t object with pin details>
+    airquality5_cfg_t cfg;
+    airquality5.data_config = 0x8583;
 
-    // lightranger5.en.pin = CLICK2.CS;
-    // lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
-    // lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
-    // lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
-    // lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
-    
-    // If the init code encounters an error: return false;
+    //  Click initialization.
+    airquality5_cfg_setup( &cfg );
+    cfg.scl = CLICK2.SCL;
+    cfg.sda = CLICK2.SDA;
+    cfg.rdy = CLICK2.INT;
 
+    airquality5.i2c.config.addr = 0x48;
+    airquality5.i2c.config.scl = CLICK2.SCL;    
+    airquality5.i2c.config.sda = CLICK2.SDA;
+    airquality5.rdy.pin = CLICK2.INT;
+
+    airquality5_init( &airquality5, &cfg );
     return true;
 }
