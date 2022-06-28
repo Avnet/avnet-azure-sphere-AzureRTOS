@@ -506,25 +506,19 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     if(hardwareInitOK){
 
         CO_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_CO );
-        
-        NO2_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NO2 );
-        printf( " NO2 data: %d\r\n", NO2_sensor_data );
-        
-        NH3_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NH3 );
-        printf( " NH3 data: %d\r\n", NH3_sensor_data );
-        
-        CO_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_CO );
-        printf("  CO data: %d\r\n", CO_sensor_data );
 
+        NO2_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NO2 );
+        NH3_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_NH3 );
+        CO_sensor_data = airq5_read_sensor_data( &airquality5, AIRQ5_DATA_CHANNEL_CO );
 
         // Construct the telemetry JSON that will be passed to the IoTHub.  In a real application the logic
         // would . . .
         // 1. Read the attached sensors (or access data)
         // 2. Construct and send telemetry JSON ("newKey"; value, "newKey2": value2, . . . ) depending on the sensor/cloud implementation
-//        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE, "{\"sampleRtKeyString\":\"%s\", \"sampleRtKeyInt\":%d, \"sampleRtKeyFloat\":%.3lf}", 
-//                                                                        "AvnetKnowsIoT", 
-//                                                                        (int)(rand()%100),
-//                                                                        ((float)rand()/(float)(RAND_MAX)) * 100);
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE, "{\"NO2\":%d, \"NH3\":%d, \"CO\":%d}", 
+                                                                        NO2_sensor_data, 
+                                                                        NH3_sensor_data,
+                                                                        CO_sensor_data);
 
     }
     else{
