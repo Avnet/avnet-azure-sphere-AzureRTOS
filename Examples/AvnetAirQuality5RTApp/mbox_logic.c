@@ -42,7 +42,7 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "generic_rt_app.h"
+#include "airquality5_rt_app.h"
 #include "avnet_starter_kit_hw.h"
 #include "airquality5.h"
 
@@ -64,14 +64,14 @@ typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_AIRQUALITY5_HL_TO_RT payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_HL_TO_RT;
 
 typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_AIRQUALITY5_RT_TO_HL payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_RT_TO_HL;;
 
 // Local buffer where we process data from/to the high level application
@@ -309,14 +309,14 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry.  Send up random
                     // telemetry to exercise the interface.
-                    case IC_NEW_CLICK_NAME_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_AIRQUALITY5_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_NEW_CLICK_NAME_SET_AUTO_TELEMETRY_RATE:
+                    case IC_AIRQUALITY5_SET_AUTO_TELEMETRY_RATE:
 
                         printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtrIncomming->payload.telemetrySendRate);
 
@@ -336,7 +336,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_NEW_CLICK_NAME_READ_SENSOR:
+                    case IC_AIRQUALITY5_READ_SENSOR:
 
                         if(hardwareInitOK){
 
@@ -352,13 +352,13 @@ void tx_thread_mbox_entry(ULONG thread_input)
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
 
-                    case IC_NEW_CLICK_NAME_HEARTBEAT:
+                    case IC_AIRQUALITY5_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
-                    case IC_NEW_CLICK_NAME_UNKNOWN:
+                    case IC_AIRQUALITY5_UNKNOWN:
                     default:
                         break;
                 }
@@ -501,7 +501,7 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     }
 
     // Set the response message ID
-    payloadPtrOutgoing->payload.cmd = IC_NEW_CLICK_NAME_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtrOutgoing->payload.cmd = IC_AIRQUALITY5_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
 
