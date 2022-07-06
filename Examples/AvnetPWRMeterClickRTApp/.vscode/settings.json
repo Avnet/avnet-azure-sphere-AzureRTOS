@@ -9,5 +9,17 @@
         "CMAKE_TOOLCHAIN_FILE": "${command:azuresphere.AzureSphereSdkDir}/CMakeFiles/AzureSphereRTCoreToolchain.cmake",
         "ARM_GNU_PATH": "${command:azuresphere.ArmGnuPath}"
     },
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "files.associations": {
+        "*.tcc": "c",
+        "bitset": "c",
+        "string": "c",
+        "vector": "c",
+        "fstream": "c",
+        "limits": "c",
+        "sstream": "c",
+        "utility": "c",
+        "algorithm": "c",
+        "os_hal_i2c.h": "c"
+    }
 }
