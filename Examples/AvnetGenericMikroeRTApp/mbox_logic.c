@@ -289,8 +289,8 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 // since the messsage/memory layout for incomming messages is different than outgoing messages.  However, we
                 // use the same mbox_local_buf memory for messages in and out.  Don't modify the memory without reading any incomming
                 // data first!
-                IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT *payloadPtrIncomming = (IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT*)mbox_local_buf;
-                IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL *payloadPtrOutgoing = (IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL*)mbox_local_buf;
+                IC_SHARED_MEMORY_BLOCK_HL_TO_RT *payloadPtrIncomming = (IC_SHARED_MEMORY_BLOCK_HL_TO_RT*)mbox_local_buf;
+                IC_SHARED_MEMORY_BLOCK_RT_TO_HL *payloadPtrOutgoing = (IC_SHARED_MEMORY_BLOCK_RT_TO_HL*)mbox_local_buf;
 
                 // Make a local copy of the message header.  This header contains the component ID of the high level
                 // application.  We need to add this header to messages being sent up to the high level application.
@@ -537,25 +537,12 @@ bool initialize_hardware(void) {
     /* TODO: Add initialization code from MikroE example main.c here */
     // Remove all code related to the logger
 
-    // Replace call to  <NewClickBoard>_MAP_MIKROBUS( cfg, MIKROBUS_1 ); 
-    // with code similar to . . .
+    // Modify the MACRO call to  <NewClickBoard>_MAP_MIKROBUS( cfg, MIKROBUS_1 ); 
+    // with
+    // <NewClickBoard>_MAP_MIKROBUS( cfg, CLICK1 );  // For devices in click socket #1
+    // OR 
+    // <NewClickBoard>_MAP_MIKROBUS( cfg, CLICK2 );  // For devices in click socket #2
 
-    // lightranger5_cfg.en =  CLICK2.CS;
-    // lightranger5_cfg.int_pin = HAL_PIN_NC;
-    // lightranger5_cfg.io0 = HAL_PIN_NC;
-    // lightranger5_cfg.io1 = HAL_PIN_NC;
-    // lightranger5_cfg.scl = HAL_PIN_NC;
-    // lightranger5_cfg.sda =  CLICK2.SDA;
-    // lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
-
-    // Also populate the <clickBoard_t object with pin details>
-
-    // lightranger5.en.pin = CLICK2.CS;
-    // lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
-    // lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
-    // lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
-    // lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
-    
     // If the init code encounters an error: return false;
 
     return true;

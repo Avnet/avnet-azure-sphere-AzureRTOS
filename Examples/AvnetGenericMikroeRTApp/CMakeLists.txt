@@ -38,11 +38,12 @@ add_executable(${PROJECT_NAME}
                 ./mikroeInterface/src/drv_digital_in.c
                 ./mikroeInterface/src/drv_digital_out.c
                 ./mikroeInterface/src/drv_i2c_master.c
+                ./mikroeInterface/src/drv_uart.c
                 ./mikroeInterface/src/drv.c                   
                 ./mbox_logic.c 
                 ./rtcoremain.c
                 ./tx_initialize_low_level.S
-                ./<newClickFolder>/src/<newClickDriver>.c)
+                ./<newClickFolder>/src/<newClickFolder>.c)
 
 # Include Folders
 include_directories(${PROJECT_NAME} PUBLIC
