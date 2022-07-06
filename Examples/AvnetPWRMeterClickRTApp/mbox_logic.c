@@ -44,7 +44,7 @@
 #include "os_hal_mbox_shared_mem.h"
 #include "generic_rt_app.h"
 #include "avnet_starter_kit_hw.h"
-#include "<TODO: add newClickBoard.h here>"
+#include "pwrmeter.h"
 
 // Add MT3620 constant
 #define MT3620_TIMER_TICKS_PER_SECOND ((ULONG) 100*10)
@@ -64,14 +64,14 @@ typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_PWR_METER_HL_TO_RT payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_HL_TO_RT;
 
 typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_PWR_METER_RT_TO_HL payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_RT_TO_HL;
 
 // Local buffer where we process data from/to the high level application
@@ -90,7 +90,7 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 0; // TODO change this to 2 to automaticlly call 
+static UINT send_telemetry_thread_period = 3; // TODO change this to 2 to automaticlly call 
                                               // readSensorsAndSendTelemetry() every 2 seconds.  
                                               // We'll add code there to read the new click board 
                                               // sensor(s).  Change it back to zero when you're ready 
@@ -140,7 +140,70 @@ bool initialize_hardware(void);
 void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, UINT mbox_shared_buf_size);
 
 /* TODO: Add MikroE Sample globals here */
+static pwrmeter_t pwrmeter;
 
+PWRMETER_RETVAL response_byte;
+uint16_t voltage_rms;
+uint32_t current_rms;
+uint32_t active_power;
+uint32_t reactive_power;
+uint32_t apparent_power;
+int32_t power_factor;
+uint8_t status_byte;
+char modeStr[3] = {'\0'};
+
+typedef enum{
+    VOLTAGE_RMS = 0,
+    CURRENT_RMS,
+    ACTIVE_POWER,
+    REACTIVE_POWER,
+    APPARENT_POWER,
+    POWER_FACTOR
+} pwr_data_t;
+
+float meas_data[ 6 ];
+
+void readPwrMonitorData(void);
+void print_PWR_data(void);
+
+void check_response ( )
+{
+    if ( response_byte != PWRMETER_SUCCESSFUL )
+    {
+        switch ( response_byte )
+        {
+            case PWRMETER_ADDRESS_FAIL :
+            {
+                printf("Wrong address parameter\r\n" );
+            break;
+            }
+            case PWRMETER_CHECKSUM_FAIL :
+            {
+                printf("Checksum fail\r\n" );
+            break;
+            }
+            case PWRMETER_COMMAND_FAIL :
+            {
+                printf("Command can't be performed\r\n" );
+            break;
+            }
+            case PWRMETER_NBYTES_FAIL :
+            {
+                printf("Number of bytes is out of range\r\n" );
+            break;
+            }
+            case PWRMETER_PAGE_NUM_FAIL :
+            {
+                printf("Page number is out of range\r\n" );
+            break;
+            }
+            default :
+            {
+            break;
+            }
+        }
+    }
+}
 
 /* Define main entry point.  */
 void tx_main(void)
@@ -307,14 +370,14 @@ void tx_thread_mbox_entry(ULONG thread_input)
                     // If the high level application sends this command message, then it's requesting that 
                     // this real time application read its sensors and return valid JSON telemetry.  Send up random
                     // telemetry to exercise the interface.
-                    case IC_NEW_CLICK_NAME_READ_SENSOR_RESPOND_WITH_TELEMETRY:
+                    case IC_PWR_METER_READ_SENSOR_RESPOND_WITH_TELEMETRY:
 
                         readSensorsAndSendTelemetry(outbound, inbound, mbox_shared_buf_size);
                         break;
 
                     // If the real time application sends this message, then the payload contains
                     // a new sample rate for automatically sending telemetry data.
-                    case IC_NEW_CLICK_NAME_SET_AUTO_TELEMETRY_RATE:
+                    case IC_PWR_METER_SET_AUTO_TELEMETRY_RATE:
 
                         printf("Set the real time application send telemetry period to %lu seconds\n", payloadPtrIncomming->payload.telemetrySendRate);
 
@@ -334,29 +397,32 @@ void tx_thread_mbox_entry(ULONG thread_input)
 
                     // The high level application is requesting raw data from the sensor(s).  In this case, he developer needs to 
                     // understand what the data is and what needs to be done with it at both the high level and real time applcations.
-                    case IC_NEW_CLICK_NAME_READ_SENSOR:
+                    case IC_PWR_METER_READ_SENSOR:
 
                         if(hardwareInitOK){
 
-                            // Simulate reading data from a sensor with random numbers
-                            payloadPtrOutgoing->payload.rawData8bit = (int)(rand()%100);
-                            payloadPtrOutgoing->payload.rawDataFloat = ((float)rand()/(float)(RAND_MAX)) * 100;
+                            readPwrMonitorData();
+                            payloadPtrOutgoing->payload.voltage = meas_data[VOLTAGE_RMS];
+                            payloadPtrOutgoing->payload.current = meas_data[CURRENT_RMS];
+                            payloadPtrOutgoing->payload.activePwr = meas_data[ACTIVE_POWER];
+                            payloadPtrOutgoing->payload.reactivePwr = meas_data[REACTIVE_POWER];
+                            payloadPtrOutgoing->payload.apparantPwr = meas_data[APPARENT_POWER];
+                            payloadPtrOutgoing->payload.pwrFactor = meas_data[POWER_FACTOR];
+                            print_PWR_data();
 
-                            printf("RealTime App sending sensor reading 8-bit: %d\n", payloadPtrOutgoing->payload.rawData8bit);
-                            printf("RealTime App sending sensor reading float: %.2f\n", payloadPtrOutgoing->payload.rawDataFloat);
                         }
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Read Sensor command with the additional data
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
 
-                    case IC_NEW_CLICK_NAME_HEARTBEAT:
+                    case IC_PWR_METER_HEARTBEAT:
                         printf("Realtime app processing heartbeat command\n");
 
                         // Write to A7, enqueue to mailbox, we're just echoing back the Heartbeat command
                         EnqueueData(inbound, outbound, mbox_shared_buf_size, mbox_local_buf, sizeof(IC_SHARED_MEMORY_BLOCK_RT_TO_HL));
                         break;
-                    case IC_NEW_CLICK_NAME_UNKNOWN:
+                    case IC_PWR_METER_UNKNOWN:
                     default:
                         break;
                 }
@@ -499,22 +565,21 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
     }
 
     // Set the response message ID
-    payloadPtrOutgoing->payload.cmd = IC_NEW_CLICK_NAME_READ_SENSOR_RESPOND_WITH_TELEMETRY;
+    payloadPtrOutgoing->payload.cmd = IC_PWR_METER_READ_SENSOR_RESPOND_WITH_TELEMETRY;
 
     if(hardwareInitOK){
 
-        // TODO: Update the call to snprintf() below to construct JSON Telemetry
-        // for your new sensor.
+        readPwrMonitorData();
 
-        // Construct the telemetry JSON that will be passed to the IoTHub.  In a real application the logic
-        // would . . .
-        // 1. Read the attached sensors (or access data)
-        // 2. Construct and send telemetry JSON ("newKey"; value, "newKey2": value2, . . . ) depending on the sensor/cloud implementation
-        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE, "{\"sampleRtKeyString\":\"%s\", \"sampleRtKeyInt\":%d, \"sampleRtKeyFloat\":%.3lf}", 
-                                                                        "AvnetKnowsIoT", 
-                                                                        (int)(rand()%100),
-                                                                        ((float)rand()/(float)(RAND_MAX)) * 100);
-
+        // Construct the telemetry JSON that will be passed to the IoTHub.
+        snprintf(payloadPtrOutgoing->payload.telemetryJSON, JSON_STRING_MAX_SIZE, 
+                "{\"volts_rms\": %.2lf,\"cur_rms\": %.2lf,\"active_pwr\": %.2lf,\"reactive_pwr\": %.2lf,\"apparent_pwr\": %.2lf,\"pwr_factor\": %.2lf}",
+                meas_data[VOLTAGE_RMS],
+                meas_data[CURRENT_RMS],
+                meas_data[ACTIVE_POWER],
+                meas_data[REACTIVE_POWER],
+                meas_data[APPARENT_POWER],
+                meas_data[POWER_FACTOR]);
     }
     else{
                         
@@ -532,18 +597,113 @@ void readSensorsAndSendTelemetry(BufferHeader *outbound, BufferHeader *inbound, 
 bool initialize_hardware(void) {
     
     // Enable the sleep if you neeed to set a breakpoint in this routine ...
-    // tx_thread_sleep(2000);
+    tx_thread_sleep(2000);
     
-    /* TODO: Add initialization code from MikroE example main.c here */
-    // Remove all code related to the logger
+    pwrmeter_cfg_t cfg;
 
-    // Modify the MACRO call to  <NewClickBoard>_MAP_MIKROBUS( cfg, MIKROBUS_1 ); 
-    // with
-    // <NewClickBoard>_MAP_MIKROBUS( cfg, CLICK1 );  // For devices in click socket #1
-    // OR 
-    // <NewClickBoard>_MAP_MIKROBUS( cfg, CLICK2 );  // For devices in click socket #2
+    pwrmeter_cfg_setup( &cfg );
+    PWRMETER_MAP_MIKROBUS( cfg, CLICK1);
+    
+    pwrmeter_init( &pwrmeter, &cfg );
+    Delay_ms( 500 );
 
-    // If the init code encounters an error: return false;
+    pwrmeter_enable( &pwrmeter, PWRMETER_DISABLE );
+    Delay_ms( 100 );
+
+    pwrmeter_enable( &pwrmeter, PWRMETER_ENABLE );
+    Delay_ms( 100 );
+    
+    response_byte = pwrmeter_write_reg_dword ( &pwrmeter, PWRMETER_SYS_CONFIG_REG, PWRMETER_VOLT_GAIN_1 | PWRMETER_CURR_GAIN_8 | PWRMETER_UART_BR_9600 );
+    check_response( );
+    response_byte = pwrmeter_send_command( &pwrmeter, PWRMETER_SAVE_TO_FLASH_COMM );
+    check_response( );
+
+    printf("PWR Meter is initialized\r\n" );
+    Delay_ms( 100 );
 
     return true;
+}
+
+void readPwrMonitorData(void){
+
+    if(hardwareInitOK){
+
+        response_byte = pwrmeter_read_reg_word( &pwrmeter, PWRMETER_VOLT_RMS_REG, &voltage_rms );
+        check_response( );
+        response_byte = pwrmeter_read_reg_dword( &pwrmeter, PWRMETER_CURR_RMS_REG, &current_rms );
+        check_response( );
+        response_byte = pwrmeter_read_reg_dword( &pwrmeter, PWRMETER_ACTIVE_PWR_REG, &active_power );
+        check_response( );
+        response_byte = pwrmeter_read_reg_dword( &pwrmeter, PWRMETER_REACTIVE_PWR_REG, &reactive_power );
+        check_response( );
+        response_byte = pwrmeter_read_reg_dword( &pwrmeter, PWRMETER_APPARENT_PWR_REG, &apparent_power );
+        check_response( );
+        response_byte = pwrmeter_read_reg_signed( &pwrmeter, PWRMETER_PWR_FACTOR_REG, PWRMETER_16BIT_DATA, &power_factor );
+        check_response( );
+        
+        meas_data[ VOLTAGE_RMS ] = ( float ) voltage_rms / 100;
+        meas_data[ CURRENT_RMS ] = ( float ) current_rms / 1000;
+        meas_data[ ACTIVE_POWER ] = ( float ) active_power / 100000;
+        meas_data[ REACTIVE_POWER ] = ( float ) reactive_power / 100000;
+        meas_data[ APPARENT_POWER ] = ( float ) apparent_power / 100000;
+        meas_data[ POWER_FACTOR ] = ( float ) power_factor / 32767;
+        print_PWR_data();
+    }
+}
+
+void print_PWR_data(void){
+        
+    response_byte = pwrmeter_get_status( &pwrmeter, &status_byte );
+    check_response( );
+    
+    if ( ( status_byte & PWRMETER_DCMODE_MASK ) != 0 )
+    {
+        printf("DC mode\r\n" );
+        strncpy(modeStr, "DC\0", 3);
+    }
+    else
+    {
+        printf("AC mode\r\n" );
+        strncpy(modeStr, "AC\0", 3);
+    }
+
+    printf("RMS voltage:  " );
+    if ( ( ( status_byte & PWRMETER_DCMODE_MASK ) != 0) && ( ( status_byte & PWRMETER_DCVOLT_SIGN_MASK ) == PWRMETER_DCVOLT_SIGN_MASK ) )
+    {
+        printf("-" );
+    }
+    printf("%.2f[ V ]\r\n", meas_data[ 0 ] );
+    
+    
+    printf("RMS current:  " );
+    if ( ( ( status_byte & PWRMETER_DCMODE_MASK ) != 0 ) && ( ( status_byte & PWRMETER_DCCURR_SIGN_MASK ) == PWRMETER_DCVOLT_SIGN_MASK ) )
+    {
+        printf("-" );
+    }
+    printf("%.2f[ mA ]\r\n", meas_data[ 1 ] );
+    
+    
+    printf("Active power:  " );
+    if ( ( status_byte & PWRMETER_PA_SIGN_MASK ) == PWRMETER_PA_SIGN_MASK )
+    {
+        printf("-" );
+    }
+    printf("%.2f[ W ]\r\n", meas_data[ 2 ] );
+    
+    
+    printf("Reactive power:  " );
+    if ( ( status_byte & PWRMETER_PR_SIGN_MASK ) == PWRMETER_PR_SIGN_MASK )
+    {
+        printf("-" );
+    }
+    printf("%.2f[ VAr ]\r\n", meas_data[ 3 ] );
+    
+
+    printf("Apparent power:  " );
+    printf("%.2f[ VA ]\r\n", meas_data[ 4 ] );
+
+    
+    printf("Power factor:  %.2f\r\n", meas_data[ 5 ] );
+    printf("-----------------------------------\r\n" );
+
 }

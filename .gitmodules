@@ -52,3 +52,15 @@
 [submodule "Examples/AvnetAirQuality5RTApp/mikroeInterface"]
 	path = Examples/AvnetAirQuality5RTApp/mikroeInterface
 	url = https://github.com/Avnet/SphereMikroeInterface.git
+[submodule "Examples/AvnetPWRMeterClickRTApp/threadx"]
+	path = Examples/AvnetPWRMeterClickRTApp/threadx
+	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/AvnetLSM6DSLClickRTApp/threadx"]
+	path = Examples/AvnetLSM6DSLClickRTApp/threadx
+	url = https://github.com/azure-rtos/threadx
+[submodule "Examples/AvnetLSM6DSLClickRTApp/mikroeInterface"]
+	path = Examples/AvnetLSM6DSLClickRTApp/mikroeInterface
+	url = https://github.com/Avnet/SphereMikroeInterface.git
+[submodule "Examples/AvnetPWRMeterClickRTApp/mikroeInterface"]
+	path = Examples/AvnetPWRMeterClickRTApp/mikroeInterface
+	url = https://github.com/Avnet/SphereMikroeInterface.git

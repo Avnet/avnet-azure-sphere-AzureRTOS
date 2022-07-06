@@ -43,14 +43,14 @@ add_executable(${PROJECT_NAME}
                 ./mbox_logic.c 
                 ./rtcoremain.c
                 ./tx_initialize_low_level.S
-                ./<newClickFolder>/src/<newClickFolder>.c)
+                ./pwrmeter/src/pwrmeter.c)
 
 # Include Folders
 include_directories(${PROJECT_NAME} PUBLIC
                     ./)
 target_include_directories(${PROJECT_NAME} PUBLIC
                             ../../mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/inc
-                            ./<newClickFolder>/include
+                            ./pwrmeter/include
                             ./mikroeInterface/inc
                             ./)
 

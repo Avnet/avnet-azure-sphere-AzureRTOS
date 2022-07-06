@@ -7,8 +7,6 @@
   "Capabilities": {
     "AllowedApplicationConnections": [ "b8f5931e-173a-40f5-a4f8-3d98240f53ec" ],
     "I2cMaster": [],
-    "Uart": [],
-    "SpiMaster": [],
     "Gpio": []
   },
   "ApplicationType": "RealTimeCapable"

@@ -5,7 +5,7 @@
 // Board Selection
 // Use this section define which Avnet Starter Kit revision to build for
 
-#define REV1_BOARD
-//#define REV2_BOARD
+//#define REV1_BOARD
+#define REV2_BOARD
 
 
