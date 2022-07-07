@@ -199,7 +199,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS PHT Click application V1 ****\n");
+    printf("\n\n**** Avnet AzureRTOS PHT Lightranger5 Click application V1 ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
