@@ -64,14 +64,14 @@ typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_SAMPLE_HL_TO_RT payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_NEW_CLICK_NAME_HL_TO_RT payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_HL_TO_RT;
 
 typedef struct __attribute__((packed))
 {
     UCHAR highLevelAppComponentID[COMPONENT_ID_LEN_IN_SHARED_MEMORY];
     UCHAR reservedBytes[RESERVED_BYTES_IN_SHARED_MEMORY];
-    IC_COMMAND_BLOCK_SAMPLE_RT_TO_HL payload; // Pointer to the message data from the high level app
+    IC_COMMAND_BLOCK_NEW_CLICK_NAME_RT_TO_HL payload; // Pointer to the message data from the high level app
 } IC_SHARED_MEMORY_BLOCK_RT_TO_HL;
 
 // Local buffer where we process data from/to the high level application
