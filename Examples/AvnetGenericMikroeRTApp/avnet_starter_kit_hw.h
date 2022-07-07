@@ -30,9 +30,9 @@
 // Click socket #2 defines
 // Header #1
 #define MIKROBUS_CLICK2_AN   HAL_PIN_NC      //  | OS_HAL_GPIO_43/43 |                          |                        |
-#define MIKROBUS_CLICK1_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_17/17 |                          |                        |
+#define MIKROBUS_CLICK2_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_17/17 |                          |                        |
 #define MIKROBUS_CLICK2_CS   HAL_PIN_NC      //  | OS_HAL_GPIO_35/35 |                          |                        |
-#define MIKROBUS_CLICK1_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 |                          |                        |
+#define MIKROBUS_CLICK2_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 |                          |                        |
 #define MIKROBUS_CLICK2_MISO HAL_PIN_NC      //  | OS_HAL_GPIO_33/33 |                          |                        |
 #define MIKROBUS_CLICK2_MOSI HAL_PIN_NC      //  | OS_HAL_GPIO_32/32 |                          |                        |
 
@@ -66,9 +66,9 @@
 // Click socket #2 defines
 // Header #1
 #define MIKROBUS_CLICK2_AN   HAL_PIN_NC      //  | OS_HAL_GPIO_43/43 |                          |                        |
-#define MIKROBUS_CLICK1_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_35/35 |                          |                        |
+#define MIKROBUS_CLICK2_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_35/35 |                          |                        |
 #define MIKROBUS_CLICK2_CS   HAL_PIN_NC      //  | OS_HAL_GPIO_32/32 |                          |                        |
-#define MIKROBUS_CLICK1_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 |                          |                        |
+#define MIKROBUS_CLICK2_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 |                          |                        |
 #define MIKROBUS_CLICK2_MISO HAL_PIN_NC      //  | OS_HAL_GPIO_33/33 |                          |                        |
 #define MIKROBUS_CLICK2_MOSI HAL_PIN_NC      //  | OS_HAL_GPIO_32/32 |                          |                        |
 
