@@ -665,6 +665,10 @@ bool initialize_hardware(void) {
     // board is in Click Socket #1
     LIGHTRANGER5_MAP_MIKROBUS( lightranger5_cfg, CLICK1 );
 
+    // Force the first lightranger5 board to use it's alternate address 0x51
+    lightranger5_cfg.i2c_address = 0x51;
+    lightranger5_Shelf1.slave_address = 0x51;
+
     // lightranger5 shelf1 init
     if(!initialize_lightranger5(&lightranger5_cfg, &lightranger5_Shelf1, false)){
         return false;
@@ -673,6 +677,9 @@ bool initialize_hardware(void) {
     // Initialize the configuration structure.  The second lightranger5
     // board is in Click Socket #2
     LIGHTRANGER5_MAP_MIKROBUS( lightranger5_cfg, CLICK2 );
+
+    lightranger5_cfg.i2c_address = 0x41;
+    lightranger5_Shelf2.slave_address = 0x41;
 
     // Lightranger shelf2 init
     if(!initialize_lightranger5(&lightranger5_cfg, &lightranger5_Shelf2, false)){

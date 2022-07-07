@@ -1,16 +1,16 @@
-# Real time application information for Avnet PHT + Lightranger5 Click Example
+# Real time application information for Avnet Smart Retail Shelf  (PHT Cick + 2*Lightranger5 Clicks) Example
 
-The Avnet TE-MS8607 + AMS-8801 AzureRTOS real time application reads I2C data from a PHT (pressure, humidity, temperature) and LightRanger5 Click boards to send environmental + range data and telemetry data to the high level application over the inter-core communication path.
+The Avnet Smart Retaul Shelf AzureRTOS real time application reads I2C data from a PHT (pressure, humidity, temperature) and 2 LightRanger5 Clicks boards to send environmental + range data and telemetry data to the high level application over the inter-core communication path.
  
 # The application supports the following Avnet inter-core implementation messages . . .
 
 * IC_SMART_SHELF_HEARTBEAT 
   * The application echos back the IC_HEARTBEAT response
 * IC_SMART_SHELF_READ_SENSOR
-  * The application fills in the IC_COMMAND_BLOCK_SMART_SHELF_RT_TO_HL structure with the raw data from the pht and lightranger5 devices
+  * The application fills in the IC_COMMAND_BLOCK_SMART_SHELF_RT_TO_HL structure with the sensor data from the pht and lightranger5 devices
 * IC_SMART_SHELF_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
   * The application reads the environmental data from the device and returns properly formatted JSON
-  * {"tempC": 22.04, "pressure": 815.92, "hum": 17.32, "range": 33}
+  * {"tempC": 24.23, "pressure": 1014.43, "hum": 48.60, "rangeShelf1": 112, "rangeShelf2": 66}
 * IC_SMART_SHELF_SET_AUTO_TELEMETRY_RATE
   * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
 
@@ -19,7 +19,7 @@ The Avnet TE-MS8607 + AMS-8801 AzureRTOS real time application reads I2C data fr
 This application binary can be side loaded onto your device with the following commands . . .
 
      azsphere device enable-development
-     azsphere device sideload deploy --image-package ./AvnetPHT-LightRangerClickRTApp-App1-V1.imagepackage
+     azsphere device sideload deploy --image-package ./Avnet-SmartRetailShelf-RTApp-App1-V1.imagepackage
 
 # Configuring a High Level application to use this example (DevX)
 There is a high level example that drives this real-time application [here](https://github.com/Avnet/AzureSphereDevX.Examples)
@@ -81,8 +81,9 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
     switch (messageData->cmd) {
         case IC_SMART_SHELF_READ_SENSOR:
             // Pull the sensor data 
-            Log_Debug("IC_SMART_SHELF_READ_SENSOR: tempC: %.2f, pressure: %.2f, humidity: %.2f, rangeShelf1: %d, rangeShelf2: %d\n", 
-                     messageData->temp, messageData->hum, messageData->pressure, messageData->rangeShelf1_mm, messageData->rangeShelf2_mm);
+            Log_Debug("IC_SMART_SHELF_READ_SENSOR: tempC: %.2f, hum: %.2f, pressure: %.2f, shelf1: %d, shelf2: %d \n", 
+                     messageData->temp, messageData->hum,
+                     messageData->pressure, messageData->rangeShelf1_mm, messageData->rangeShelf2_mm);
             break;
         case IC_SMART_SHELF_HEARTBEAT:
             Log_Debug("IC_SMART_SHELF_HEARTBEAT\n");
@@ -103,7 +104,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
         case IC_SMART_SHELF_UNKNOWN:
         default:
             break;
-    }
+        }
 }
 ```
 * Add code to send messages to the RTApp
