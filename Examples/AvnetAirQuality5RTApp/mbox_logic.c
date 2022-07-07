@@ -208,7 +208,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS Generic applicationV2 ****\n");
+    printf("\n\n**** Avnet Airquality5 Click AzureRTOS applicationV1 ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -301,7 +301,7 @@ void tx_thread_mbox_entry(ULONG thread_input)
                 }
 
                 /* Print the received message.*/
-                mbox_print((u8*)payloadPtrIncomming, mbox_local_buf_len);
+                // mbox_print((u8*)payloadPtrIncomming, mbox_local_buf_len);
                 
                 /* Process the command from the high level Application */
                 switch (payloadPtrIncomming->payload.cmd)
