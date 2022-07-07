@@ -512,36 +512,22 @@ bool initialize_hardware(void) {
     tx_thread_sleep(2000);
 
     // Open the EN pin for output
-    if( 0 != mtk_os_hal_gpio_set_direction( MIKROBUS_CS, OS_HAL_GPIO_DIR_OUTPUT)){
+    if( 0 != mtk_os_hal_gpio_set_direction( MIKROBUS_CLICK1_CS, OS_HAL_GPIO_DIR_OUTPUT)){
         return false;
     }
     
     // Drive the EN pin low to hold the device in reset
-    mtk_os_hal_gpio_set_output(MIKROBUS_CS, OS_HAL_GPIO_DATA_LOW);
+    mtk_os_hal_gpio_set_output(MIKROBUS_CLICK1_CS, OS_HAL_GPIO_DATA_LOW);
 
     // Call the routine that will update the firmware
-    lightranger5_update_firmware ( MIKROBUS_SCL, MIKROBUS_CS, 0x00);
+    lightranger5_update_firmware ( MIKROBUS_CLICK1_SCL, MIKROBUS_CLICK1_CS, 0x00);
 
     lightranger5_cfg_t lightranger5_cfg;
     lightranger5_cfg_setup( &lightranger5_cfg );
 
-    // Initialize the configuration structure, these constants
-    // are defined in avnet_starter_kit_hw.h
-    lightranger5_cfg.en =  MIKROBUS_CS;
-    lightranger5_cfg.int_pin = HAL_PIN_NC; //MIKROBUS_INT;
-    lightranger5_cfg.io0 = HAL_PIN_NC;// MIKROBUS_RST;
-    lightranger5_cfg.io1 = HAL_PIN_NC; //MIKROBUS_PWM;
-    lightranger5_cfg.scl = MIKROBUS_SCL;
-    lightranger5_cfg.sda =  MIKROBUS_SCL;
-    lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
 
+    LIGHTRANGER5_MAP_MIKROBUS( lightranger5_cfg, CLICK1 );
 
-    lightranger5.en.pin = MIKROBUS_CS;
-    lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
-    lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
-    lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
-    lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
-    
     err_t init_flag = lightranger5_init( &lightranger5, &lightranger5_cfg );
     if ( init_flag == I2C_MASTER_ERROR ) {
         printf(" Application Init Error. " );

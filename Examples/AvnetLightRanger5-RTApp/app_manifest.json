@@ -6,7 +6,7 @@
   "CmdArgs": [],
   "Capabilities": {
     "I2cMaster": ["ISU2"],
-    "Gpio": [29],
+    "Gpio": [34],
     "AllowedApplicationConnections": [ "b8f5931e-173a-40f5-a4f8-3d98240f53ec" ]
   },
   "ApplicationType": "RealTimeCapable"
