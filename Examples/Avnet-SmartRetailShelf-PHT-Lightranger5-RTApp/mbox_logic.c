@@ -627,27 +627,27 @@ bool initialize_hardware(void) {
     // 4. Change the I2C address of the first device
 
     // Open the EN pin for Click site #1
-    if( 0 != mtk_os_hal_gpio_set_direction((os_hal_gpio_pin)CLICK1.CS, OS_HAL_GPIO_DIR_OUTPUT)){
+    if( 0 != mtk_os_hal_gpio_set_direction((os_hal_gpio_pin)MIKROBUS_CLICK1_CS, OS_HAL_GPIO_DIR_OUTPUT)){
         return false;
     }
     
     // Drive the Click site #1 EN pin low to hold the device in reset
-    mtk_os_hal_gpio_set_output((os_hal_gpio_pin)CLICK1.CS, OS_HAL_GPIO_DATA_LOW);
+    mtk_os_hal_gpio_set_output((os_hal_gpio_pin)MIKROBUS_CLICK1_CS, OS_HAL_GPIO_DATA_LOW);
 
 #endif // SHELF_USES_8801
 
     // Open the EN pin for Click site #2
-    if( 0 != mtk_os_hal_gpio_set_direction( (os_hal_gpio_pin)CLICK2.CS, OS_HAL_GPIO_DIR_OUTPUT)){
+    if( 0 != mtk_os_hal_gpio_set_direction( (os_hal_gpio_pin)MIKROBUS_CLICK2_CS, OS_HAL_GPIO_DIR_OUTPUT)){
         return false;
     }
     
     // Drive the Click site #2 EN pin low to hold the device in reset
-    mtk_os_hal_gpio_set_output((os_hal_gpio_pin)CLICK2.CS, OS_HAL_GPIO_DATA_LOW);
+    mtk_os_hal_gpio_set_output((os_hal_gpio_pin)MIKROBUS_CLICK2_CS, OS_HAL_GPIO_DATA_LOW);
 
     // Call the routine that will update the firmwae and change the I2C addres for
     // the Lightranger5 click board in click socket #1
     //                             (I2C ISU)  (EN GPIO)  (New I2C address)
-    lightranger5_update_firmware ( CLICK1.SDA, CLICK1.CS, 0x51);
+    lightranger5_update_firmware ( MIKROBUS_CLICK1_SDA, MIKROBUS_CLICK1_CS, 0x51);
 
 #ifdef SHELF_USES_8801
 
@@ -656,20 +656,14 @@ bool initialize_hardware(void) {
     // Call the routine that will update the firmwae and don't change the I2C addres for
     // the Lightranger5 click board in click socket #2
     //                           (  I2C ISU)   (EN GPIO) (New I2C address)
-    lightranger5_update_firmware ( CLICK2.SDA, CLICK2.CS, 0x00);
+    lightranger5_update_firmware ( MIKROBUS_CLICK1_SDA, MIKROBUS_CLICK2_CS, 0x00);
 
     lightranger5_cfg_t lightranger5_cfg;
     lightranger5_cfg_setup( &lightranger5_cfg );
 
     // Initialize the configuration structure.  The first lightranger5
     // board is in Click Socket #1
-    lightranger5_cfg.en =  CLICK1.CS;
-    lightranger5_cfg.int_pin = HAL_PIN_NC;
-    lightranger5_cfg.io0 = HAL_PIN_NC;
-    lightranger5_cfg.io1 = HAL_PIN_NC;
-    lightranger5_cfg.scl = CLICK1.SCL;
-    lightranger5_cfg.sda =  CLICK1.SDA;
-    lightranger5_cfg.i2c_address = 0x51;
+    LIGHTRANGER5_MAP_MIKROBUS( lightranger5_cfg, CLICK1 );
 
     // lightranger5 shelf1 init
     if(!initialize_lightranger5(&lightranger5_cfg, &lightranger5_Shelf1, false)){
@@ -678,13 +672,7 @@ bool initialize_hardware(void) {
 
     // Initialize the configuration structure.  The second lightranger5
     // board is in Click Socket #2
-    lightranger5_cfg.en =  CLICK2.CS;
-    lightranger5_cfg.int_pin = HAL_PIN_NC;
-    lightranger5_cfg.io0 = HAL_PIN_NC;
-    lightranger5_cfg.io1 = HAL_PIN_NC;
-    lightranger5_cfg.scl = CLICK2.SCL;
-    lightranger5_cfg.sda =  CLICK2.SDA;
-    lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
+    LIGHTRANGER5_MAP_MIKROBUS( lightranger5_cfg, CLICK2 );
 
     // Lightranger shelf2 init
     if(!initialize_lightranger5(&lightranger5_cfg, &lightranger5_Shelf2, false)){
@@ -728,14 +716,8 @@ bool initialize_hardware(void) {
     // Click initialization.
     pht_cfg_setup( &pht_cfg );
 
-    // Setup the pin mapping here
-    pht_cfg.scl = CLICK1.SCL;
-    pht_cfg.sda = CLICK1.SDA;
-
-    // Set the I2C interface specs here
-    pht_cfg.i2c_speed   = I2C_MASTER_SPEED_STANDARD;
-    pht_cfg.i2c_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
-    pht.slave_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
+    // Setup the pin mapping
+    PHT_MAP_MIKROBUS( pht_cfg, CLICK1 );
 
     err_t init_flag = pht_init( &pht, &pht_cfg );
     if ( init_flag == I2C_MASTER_ERROR ) {

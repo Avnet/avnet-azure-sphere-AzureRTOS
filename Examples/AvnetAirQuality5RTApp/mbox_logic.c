@@ -542,33 +542,12 @@ bool initialize_hardware(void) {
     // Enable the sleep if you neeed to set a breakpoint in this routine ...
     // tx_thread_sleep(2000);
 
-    /* TODO: Add initialization code from MikroE example main.c here */
-    // Remove all code related to the logger
-
-    // Replace call to  <NewClickBoard>_MAP_MIKROBUS( cfg, MIKROBUS_1 ); 
-    // with code similar to . . .
-
-    // lightranger5_cfg.en =  CLICK2.CS;
-    // lightranger5_cfg.int_pin = HAL_PIN_NC;
-    // lightranger5_cfg.io0 = HAL_PIN_NC;
-    // lightranger5_cfg.io1 = HAL_PIN_NC;
-    // lightranger5_cfg.scl = HAL_PIN_NC;
-    // lightranger5_cfg.sda =  CLICK2.SDA;
-    // lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
-
     airquality5_cfg_t cfg;
     airquality5.data_config = 0x8583;
 
     //  Click initialization.
     airquality5_cfg_setup( &cfg );
-    cfg.scl = CLICK2.SCL;
-    cfg.sda = CLICK2.SDA;
-    cfg.rdy = CLICK2.INT;
-
-    airquality5.i2c.config.addr = 0x48;
-    airquality5.i2c.config.scl = CLICK2.SCL;    
-    airquality5.i2c.config.sda = CLICK2.SDA;
-    airquality5.rdy.pin = CLICK2.INT;
+    AIRQUALITY5_MAP_MIKROBUS( cfg, CLICK1 );
 
     airquality5_init( &airquality5, &cfg );
     return true;

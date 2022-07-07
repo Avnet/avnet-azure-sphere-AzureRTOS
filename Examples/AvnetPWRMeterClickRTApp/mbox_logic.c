@@ -90,7 +90,7 @@ static const UINT mbox_irq_status = 0x3;
 // Variable to track how often we send telemetry if configured to do so from the high level application
 // When this variable is set to 0, telemetry is only sent when the high level application request it
 // When this variable is > 0, then telemetry will be sent every send_telemetry_thread_period seconds
-static UINT send_telemetry_thread_period = 3; // TODO change this to 2 to automaticlly call 
+static UINT send_telemetry_thread_period = 0; // TODO change this to 2 to automaticlly call 
                                               // readSensorsAndSendTelemetry() every 2 seconds.  
                                               // We'll add code there to read the new click board 
                                               // sensor(s).  Change it back to zero when you're ready 
@@ -268,7 +268,7 @@ void tx_application_define(void *first_unused_memory)
     /* Open the MBOX channel of A7 <-> M4 */
     mtk_os_hal_mbox_open_channel(OS_HAL_MBOX_CH0);
 
-    printf("\n\n**** Avnet AzureRTOS Generic applicationV2 ****\n");
+    printf("\n\n**** Avnet PWM Meter Click AzureRTOS applicationV1 ****\n");
 }
 
 // The mbox thread is responsible for servicing the message queue between the high level and real time
@@ -676,7 +676,7 @@ void print_PWR_data(void){
     
     
     printf("RMS current:  " );
-    if ( ( ( status_byte & PWRMETER_DCMODE_MASK ) != 0 ) && ( ( status_byte & PWRMETER_DCCURR_SIGN_MASK ) == PWRMETER_DCVOLT_SIGN_MASK ) )
+    if ( ( ( status_byte & PWRMETER_DCMODE_MASK ) != 0 ) && ( ( status_byte & PWRMETER_DCCURR_SIGN_MASK ) == 0 ) )
     {
         printf("-" );
     }

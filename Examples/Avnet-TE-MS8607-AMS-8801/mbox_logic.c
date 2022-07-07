@@ -545,16 +545,8 @@ bool initialize_hardware(void) {
     // Click initialization.
     pht_cfg_setup( &pht_cfg );
 
-    // Setup the pin mapping here
-    pht_cfg.scl = MIKROBUS_SCL;
-    pht_cfg.sda = MIKROBUS_SCL;
-
-    // Set the I2C interface specs here
-    pht_cfg.i2c_speed   = I2C_MASTER_SPEED_STANDARD;
-    pht_cfg.i2c_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
-
-    pht.slave_address = PHT_I2C_SLAVE_ADDR_P_AND_T;
-
+    // Setup the pin mapping
+    PHT_MAP_MIKROBUS( pht_cfg, CLICK1 );
     err_t init_flag = pht_init( &pht, &pht_cfg );
     if ( init_flag == I2C_MASTER_ERROR ) {
         printf(" Application Init Error. " );
@@ -571,29 +563,20 @@ bool initialize_hardware(void) {
     Delay_ms( 100 );
     printf("---------------------------- \r\n " );
 
-    // Lightranger5 init
+    // Drive the Click site #1 EN pin low to hold the device in reset
+    mtk_os_hal_gpio_set_output((os_hal_gpio_pin)MIKROBUS_CLICK1_CS, OS_HAL_GPIO_DATA_LOW);
 
+    // Call the routine that will update the firmwae
+    lightranger5_update_firmware ( MIKROBUS_CLICK1_SDA, MIKROBUS_CLICK1_CS, 0x00);
+
+    // Lightranger5 init
     lightranger5_cfg_t lightranger5_cfg;
     lightranger5_cfg_setup( &lightranger5_cfg );
 
-    // Initialize the configuration structure, these constants
-    // are defined in avnet_starter_kit_hw.h
-    lightranger5_cfg.en =  MIKROBUS_CS;
-    lightranger5_cfg.int_pin = HAL_PIN_NC; //MIKROBUS_INT;
-    lightranger5_cfg.io0 = HAL_PIN_NC;// MIKROBUS_RST;
-    lightranger5_cfg.io1 = HAL_PIN_NC; //MIKROBUS_PWM;
-    lightranger5_cfg.scl = MIKROBUS_SCL;
-    lightranger5_cfg.sda =  MIKROBUS_SCL;
-    lightranger5_cfg.i2c_address = LIGHTRANGER5_SET_DEV_ADDR;
+    // Initialize the configuration structure. 
+    LIGHTRANGER5_MAP_MIKROBUS( lightranger5_cfg, CLICK1 );
 
-
-    lightranger5.en.pin = MIKROBUS_CS;
-    lightranger5.int_pin.pin = HAL_PIN_NC; //MIKROBUS_INT;
-    lightranger5.io0.pin = HAL_PIN_NC; //MIKROBUS_RST;
-    lightranger5.io1.pin = HAL_PIN_NC; // MIKROBUS_PWM;
-    lightranger5.slave_address = LIGHTRANGER5_SET_DEV_ADDR;
-    
-    init_flag = lightranger5_init( &lightranger5, &lightranger5_cfg );
+    init_flag = lightranger5_init( &lightranger5, &lightranger5_cfg, false );
     if ( init_flag == I2C_MASTER_ERROR ) {
         printf(" Application Init Error. " );
         printf(" Please, run program again... " );

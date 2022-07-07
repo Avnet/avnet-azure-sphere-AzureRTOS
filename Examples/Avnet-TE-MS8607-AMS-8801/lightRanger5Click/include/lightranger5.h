@@ -36,6 +36,8 @@ extern "C"{
 #include "drv_digital_in.h"
 #include "drv_i2c_master.h"
     
+#define INCLUDE_APP_RESETS
+
 /*!
  * @addtogroup lightranger5 LightRanger 5 Click Driver
  * @brief API for configuring and manipulating LightRanger 5 Click driver.
@@ -318,7 +320,7 @@ void lightranger5_cfg_setup ( lightranger5_cfg_t *cfg );
  *
  * @endcode
  */
-err_t lightranger5_init ( lightranger5_t *ctx, lightranger5_cfg_t *cfg );
+err_t lightranger5_init ( lightranger5_t *ctx, lightranger5_cfg_t *cfg, bool includeResets );
 
 /**
  * @brief LightRanger 5 default configuration function.
@@ -704,6 +706,10 @@ uint16_t lightranger5_measure_distance ( lightranger5_t *ctx );
  * @endcode
  */
 uint8_t lightranger5_check_int ( lightranger5_t *ctx );
+
+err_t lightranger5_update_firmware ( i2c_num isu, pin_name_t en, uint8_t new_i2c_address);
+
+err_t lightranger5_change_12c_address ( lightranger5_t* ctx, uint8_t new_i2c_address );
 
 #ifdef __cplusplus
 }

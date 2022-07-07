@@ -1,13 +1,12 @@
 #pragma once
 
-// This file is used to make build time configuration changes for the example application
+// Select the Avnet Starter kit Rev and which click socket contains the Thermo CLICK board
 
 // Board Selection
 // Use this section define which Avnet Starter Kit revision to build for
+#define REV1_BOARD    
+//#define REV2_BOARD
 
-/* Both Avnet boards use the same I2C ISU (ISU2) */
-
-// CLICK Socket Selection
-// Use this section to define which CLICK socket the sensor hardware is using
-
-/* All the click sockets on both boards use the same I2C ISU (ISU2)*/
+#if defined(REV1_BOARD) && defined(REV2_BOARD)
+#error "Invalid configuration, only one board revision can be defined!"
+#endif
