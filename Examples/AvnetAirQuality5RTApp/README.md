@@ -1,4 +1,4 @@
-# Real time application information for Avnet PHT Click Example
+# Real time application information for Avnet Airquality5 Click Example
 
 The Avnet Airquality5 AzureRTOS real time application reads I2C data from a Airquality5 Click board to send air quality data and telemetry data to the high level application over the inter-core communication path.
  
