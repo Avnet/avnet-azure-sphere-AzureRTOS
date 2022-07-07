@@ -1,16 +1,16 @@
-# Real time application information for Avnet PHT + Lightranger5 Click Example
+# Real time application information for Avnet PHT Click Example
 
-The Avnet TE-MS8607 + AMS-8801 AzureRTOS real time application reads I2C data from a PHT (pressure, humidity, temperature) and LightRanger5 Click boards to send environmental + range data and telemetry data to the high level application over the inter-core communication path.
+The Avnet TE-MS8607 (PHT Click) + AMS-8801 (Lightranger5 Click) AzureRTOS real time application reads I2C data from a PHT (pressure, humidity, temperature) and LightRanger5 Click boards to send environmental + range data and telemetry data to the high level application over the inter-core communication path.
  
 # The application supports the following Avnet inter-core implementation messages . . .
 
 * IC_PHT_LIGHTRANGER5_HEARTBEAT 
-  * The application echos back the IC_HEARTBEAT response
+  * The application echos back the IC_PHT_LIGHTRANGER5_HEARTBEAT response
 * IC_PHT_LIGHTRANGER5_READ_SENSOR
-  * The application fills in the IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_RT_TO_HL structure with the raw data from the pht and lightranger5 devices
+  * The application fills in the IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_RT_TO_HL structure with the raw data from the sensor
 * IC_PHT_LIGHTRANGER5_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
   * The application reads the environmental data from the device and returns properly formatted JSON
-  * {"tempC": 22.04, "pressure": 815.92, "hum": 17.32, "range": 33}
+  *  {"tempC": 28.47, "pressure": 1014.07, "hum": 40.99, "range": 22}
 * IC_PHT_LIGHTRANGER5_SET_AUTO_TELEMETRY_RATE
   * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
 
@@ -81,8 +81,9 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
     switch (messageData->cmd) {
         case IC_PHT_LIGHTRANGER5_READ_SENSOR:
             // Pull the sensor data 
-            Log_Debug("IC_PHT_LIGHTRANGER5_READ_SENSOR: tempC: %.2f, pressure: %.2f, humidity: %.2f, range: %d\n", 
-                     messageData->temp, messageData->hum, messageData->pressure, messageData->range_mm);
+            Log_Debug("IC_PHT_LIGHTRANGER5_READ_SENSOR: tempC: %.2f, hum: %.2f, pressure: %.2f, range: %d \n", 
+                     messageData->temp, messageData->hum,
+                     messageData->pressure, messageData->range_mm);
             break;
         case IC_PHT_LIGHTRANGER5_HEARTBEAT:
             Log_Debug("IC_PHT_LIGHTRANGER5_HEARTBEAT\n");
@@ -103,7 +104,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
         case IC_PHT_LIGHTRANGER5_UNKNOWN:
         default:
             break;
-    }
+        }
 }
 ```
 * Add code to send messages to the RTApp
@@ -124,15 +125,15 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
     // Send read sensor message to realtime core app one
     ic_tx_block.cmd = IC_PHT_LIGHTRANGER5_READ_SENSOR_RESPOND_WITH_TELEMETRY;
     dx_intercorePublish(&intercore_pht_lightranger5_binding, &ic_tx_block,
-                        sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT));;
+                        sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT));
 
     // Code to request the real time app to automatically send telemetry data every 5 seconds
     memset(&ic_tx_block, 0x00, sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT));
 
     // Send read sensor message to realtime app
-    ic_tx_block_sample.cmd = IC_PHT_LIGHTRANGER5_SET_AUTO_TELEMETRY_RATE;
-    ic_tx_block_sample.telemetrySendRate = 5;
-    dx_intercorePublish(&intercore_pht_lightranger5_binding, &ic_tx_block_sample,
+    ic_tx_block.cmd = IC_PHT_LIGHTRANGER5_SET_AUTO_TELEMETRY_RATE;
+    ic_tx_block.telemetrySendRate = 5;
+    dx_intercorePublish(&intercore_pht_lightranger5_binding, &ic_tx_block,
                             sizeof(IC_COMMAND_BLOCK_PHT_LIGHTRANGER5_HL_TO_RT));     
 ```
 * Update the high level application app_manifest.json file with the real time application's ComponentID
