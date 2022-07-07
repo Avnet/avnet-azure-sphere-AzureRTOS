@@ -1,17 +1,17 @@
 # Real time application information for Avnet PHT Click Example
 
-The Avnet PHTClick AzureRTOS real time application reads I2C data from a PHT (pressure, humidity, temperature) Click board to send environmental data and telemetry data to the high level application over the inter-core communication path.
+The Avnet PHT Click AzureRTOS real time application reads I2C data from a PHT Click board to send pressure, humidity and temperature data and telemetry data to the high level application over the inter-core communication path.
  
 # The application supports the following Avnet inter-core implementation messages . . .
 
 * IC_PHT_CLICK_HEARTBEAT 
-  * The application echos back the IC_HEARTBEAT response
+  * The application echos back the IC_PHT_CLICK_HEARTBEAT response
 * IC_PHT_CLICK_READ_SENSOR
-  * The application fills in the IC_COMMAND_BLOCK_PHT_CLICK_RT_TO_HL structure with the raw data from the pht device
+  * The application fills in the IC_COMMAND_BLOCK_PHT_CLICK_RT_TO_HL structure with the raw data from the sensor
 * IC_PHT_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY, 
   * The application reads the environmental data from the device and returns properly formatted JSON
-  * {"tempC": 22.04, "pressure": 815.92, "hum": 17.32}
-* IC_GROVE_SET_AUTO_TELEMETRY_RATE
+  * {"tempC": 27.07, "pressure": 1014.21, "hum": 46.45}
+* IC_PHT_CLICK_SET_AUTO_TELEMETRY_RATE
   * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
 
 # Sideloading the appliction binary
@@ -19,20 +19,20 @@ The Avnet PHTClick AzureRTOS real time application reads I2C data from a PHT (pr
 This application binary can be side loaded onto your device with the following commands . . .
 
      azsphere device enable-development
-     azsphere device sideload deploy --image-package ./AvnetPHTClick-Workshop-V1.imagepackage
+     azsphere device sideload deploy --image-package ./AvnetPHTClickRTApp-App1-V1.imagepackage
 
 # Configuring a High Level application to use this example (DevX)
 There is a high level example that drives this real-time application [here](https://github.com/Avnet/AzureSphereDevX.Examples)
 
 To configure a high level DevX application to use this application ...
 
-* Copy ```pht_click.h``` from the example repo into your project directory
+* Copy ```pht_click_rt_app.h``` from the example repo into your project directory
 
 * Include the header files in main.h
 
 ```c
 #include "dx_intercore.h"
-#include "pht_click.h"
+#include "pht_click_rt_app.h"
 ```
 
 * Add handler function definition to the Forward declarations section in main.h
@@ -51,7 +51,7 @@ IC_COMMAND_BLOCK_PHT_CLICK_RT_TO_HL ic_rx_block;
 /****************************************************************************************
  * Inter Core Bindings
  *****************************************************************************************/
-DX_INTERCORE_BINDING intercore_PHT_click_binding = {
+DX_INTERCORE_BINDING intercore_pht_click_binding = {
     .sockFd = -1,
     .nonblocking_io = true,
     .rtAppComponentId = "f6768b9a-e086-4f5a-8219-5ffe9684b001",
@@ -63,7 +63,7 @@ DX_INTERCORE_BINDING intercore_PHT_click_binding = {
 * Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
 ```c
     // Initialize the intercore communications in the InitPeripheralsAndHandlers(void) routine
-    dx_intercoreConnect(&intercore_PHT_click_binding);
+    dx_intercoreConnect(&intercore_pht_click_binding);
 ```
 * Include the handler to process interCore responses
 ```c
@@ -80,8 +80,8 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
     switch (messageData->cmd) {
         case IC_PHT_CLICK_READ_SENSOR:
             // Pull the sensor data 
-            Log_Debug("IC_PHT_CLICK_READ_SENSOR: tempC: %.2f, pressure: %.2f, humidity: %.2f\n", 
-                     messageData->temp, messageData->hum, messageData->pressure);
+            Log_Debug("IC_PHT_CLICK_READ_SENSOR: tempC: %.2f, pressure: %.2f, hum: %.2f\n", 
+                     messageData->temp, messageData->pressure, messageData->hum);
             break;
         case IC_PHT_CLICK_HEARTBEAT:
             Log_Debug("IC_PHT_CLICK_HEARTBEAT\n");
@@ -113,7 +113,7 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
 
     // Send read sensor message to realtime core app one
     ic_tx_block.cmd = IC_PHT_CLICK_READ_SENSOR;
-    dx_intercorePublish(&intercore_PHT_click_binding, &ic_tx_block,
+    dx_intercorePublish(&intercore_pht_click_binding, &ic_tx_block,
                         sizeof(IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT));
 
     // Code to request telemetry data 
@@ -122,16 +122,16 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
 
     // Send read sensor message to realtime core app one
     ic_tx_block.cmd = IC_PHT_CLICK_READ_SENSOR_RESPOND_WITH_TELEMETRY;
-    dx_intercorePublish(&intercore_PHT_click_binding, &ic_tx_block,
-                        sizeof(IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT));;
+    dx_intercorePublish(&intercore_pht_click_binding, &ic_tx_block,
+                        sizeof(IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT));
 
     // Code to request the real time app to automatically send telemetry data every 5 seconds
     memset(&ic_tx_block, 0x00, sizeof(IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT));
 
     // Send read sensor message to realtime app
-    ic_tx_block_sample.cmd = IC_PHT_CLICK_SET_AUTO_TELEMETRY_RATE;
-    ic_tx_block_sample.telemetrySendRate = 5;
-    dx_intercorePublish(&intercore_PHT_click_binding, &ic_tx_block_sample,
+    ic_tx_block.cmd = IC_PHT_CLICK_SET_AUTO_TELEMETRY_RATE;
+    ic_tx_block.telemetrySendRate = 5;
+    dx_intercorePublish(&intercore_pht_click_binding, &ic_tx_block,
                             sizeof(IC_COMMAND_BLOCK_PHT_CLICK_HL_TO_RT));     
 ```
 * Update the high level application app_manifest.json file with the real time application's ComponentID
