@@ -10,66 +10,76 @@
 
 #ifdef REV1_BOARD
 
-// Click socket #1 defines
-#define MIKROBUS_CLICK1_AN HAL_PIN_NC
-#define MIKROBUS_CLICK1_CS OS_HAL_GPIO_34 
-#define MIKROBUS_CLICK1_MISO HAL_PIN_NC
-#define MIKROBUS_CLICK1_MOSI HAL_PIN_NC
+// Click socket #1 defines                   //  |   GPIO/manifest   |      UART/manifest       |       I2C/manifest     |      SPI/manifest
+// Header #1
+#define MIKROBUS_CLICK1_AN   HAL_PIN_NC      //  | OS_HAL_GPIO_42/42 |                          |                        |
+#define MIKROBUS_CLICK1_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_16/16 |                          |                        |
+#define MIKROBUS_CLICK1_CS   OS_HAL_GPIO_34  //  | OS_HAL_GPIO_34/34 |                          |                        |
+#define MIKROBUS_CLICK1_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 |                          |                        |
+#define MIKROBUS_CLICK1_MISO HAL_PIN_NC      //  | OS_HAL_GPIO_33/33 |                          |                        |
+#define MIKROBUS_CLICK1_MOSI HAL_PIN_NC      //  | OS_HAL_GPIO_32/32 |                          |                        |
 
-#define MIKROBUS_CLICK1_PWM HAL_PIN_NC
-#define MIKROBUS_CLICK1_INT HAL_PIN_NC
-#define MIKROBUS_CLICK1_RX OS_HAL_UART_ISU0
-#define MIKROBUS_CLICK1_TX OS_HAL_UART_ISU0
-#define MIKROBUS_CLICK1_SCL HAL_PIN_NC
-#define MIKROBUS_CLICK1_SDA HAL_PIN_NC
+// Header #2
+#define MIKROBUS_CLICK1_PWM  HAL_PIN_NC      //  | OS_HAL_GPIO_0/0   |                          |                        |
+#define MIKROBUS_CLICK1_INT  HAL_PIN_NC      //  | OS_HAL_GPIO_2/2   |                          |                        |
+#define MIKROBUS_CLICK1_RX   OS_HAL_UART_ISU0//  | OS_HAL_GPIO_28/28 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
+#define MIKROBUS_CLICK1_TX   OS_HAL_UART_ISU0//  | OS_HAL_GPIO_26/26 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
+#define MIKROBUS_CLICK1_SCL  HAL_PIN_NC      //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK1_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 // Click socket #2 defines
-#define MIKROBUS_CLICK2_AN HAL_PIN_NC
-#define MIKROBUS_CLICK2_CS OS_HAL_GPIO_34
-#define MIKROBUS_CLICK2_MISO HAL_PIN_NC
-#define MIKROBUS_CLICK2_MOSI HAL_PIN_NC
+// Header #1
+#define MIKROBUS_CLICK2_AN   HAL_PIN_NC      //  | OS_HAL_GPIO_43/43 |                          |                        |
+#define MIKROBUS_CLICK2_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_17/17 |                          |                        |
+#define MIKROBUS_CLICK2_CS   OS_HAL_GPIO_35  //  | OS_HAL_GPIO_35/35 |                          |                        |
+#define MIKROBUS_CLICK2_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 |                          |                        |
+#define MIKROBUS_CLICK2_MISO HAL_PIN_NC      //  | OS_HAL_GPIO_33/33 |                          |                        |
+#define MIKROBUS_CLICK2_MOSI HAL_PIN_NC      //  | OS_HAL_GPIO_32/32 |                          |                        |
 
-#define MIKROBUS_CLICK2_PWM HAL_PIN_NC
-#define MIKROBUS_CLICK2_INT HAL_PIN_NC
-#define MIKROBUS_CLICK2_RX OS_HAL_UART_ISU1
-#define MIKROBUS_CLICK2_TX OS_HAL_UART_ISU1
-#define MIKROBUS_CLICK2_SCL HAL_PIN_NC
-#define MIKROBUS_CLICK2_SDA HAL_PIN_NC
+// Header #2
+#define MIKROBUS_CLICK2_PWM  HAL_PIN_NC      //  | OS_HAL_GPIO_1/1   |                          |                        |
+#define MIKROBUS_CLICK2_INT  HAL_PIN_NC      //  | OS_HAL_GPIO_2/2   |                          |                        |
+#define MIKROBUS_CLICK2_RX   OS_HAL_UART_ISU1//  | OS_HAL_GPIO_28/28 | OS_HAL_UART_ISU1/ "ISU1" |                        |    
+#define MIKROBUS_CLICK2_TX   OS_HAL_UART_ISU1//  | OS_HAL_GPIO_26/26 | OS_HAL_UART_ISU1/ "ISU1" |                        |
+#define MIKROBUS_CLICK2_SCL  HAL_PIN_NC      //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK2_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 #elif defined(REV2_BOARD)
 
-// Click socket #1 defines
-#define MIKROBUS_CLICK1_AN HAL_PIN_NC
-#define MIKROBUS_CLICK1_CS OS_HAL_GPIO_29 // Note this gpio pin is in the ISU0 group, so it won't be used and should not be listed
-                                          // in the app_manifest.json file.  However because the ISU drives this signal low, the 
-                                          // example will work.
-#define MIKROBUS_CLICK1_MISO HAL_PIN_NC
-#define MIKROBUS_CLICK1_MOSI HAL_PIN_NC
+// Click socket #1 defines                   //  |   GPIO/manifest   |      UART/manifest       |       I2C/manifest     |      SPI/manifest
+// Header #1
+#define MIKROBUS_CLICK1_AN   HAL_PIN_NC      //  | OS_HAL_GPIO_42/42 |                          |                        |
+#define MIKROBUS_CLICK1_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_2/2   |                          |                        |
+#define MIKROBUS_CLICK1_CS   OS_HAL_GPIO_29  //  | OS_HAL_GPIO_29/29 |                          |                        |
+#define MIKROBUS_CLICK1_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_26/26 |                          |                        |
+#define MIKROBUS_CLICK1_MISO HAL_PIN_NC      //  | OS_HAL_GPIO_28/28 |                          |                        |
+#define MIKROBUS_CLICK1_MOSI HAL_PIN_NC      //  | OS_HAL_GPIO_27/27 |                          |                        |
 
-#define MIKROBUS_CLICK1_PWM HAL_PIN_NC
-#define MIKROBUS_CLICK1_INT HAL_PIN_NC
-#define MIKROBUS_CLICK1_RX OS_HAL_UART_ISU0
-#define MIKROBUS_CLICK1_TX OS_HAL_UART_ISU0
-#define MIKROBUS_CLICK1_SCL HAL_PIN_NC
-#define MIKROBUS_CLICK1_SDA HAL_PIN_NC
+// Header #2
+#define MIKROBUS_CLICK1_PWM  HAL_PIN_NC      //  | OS_HAL_GPIO_0/0   |                          |                        |
+#define MIKROBUS_CLICK1_INT  HAL_PIN_NC      //  | OS_HAL_GPIO_5/5   |                          |                        |
+#define MIKROBUS_CLICK1_RX   OS_HAL_UART_ISU0//  | OS_HAL_GPIO_28/28 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
+#define MIKROBUS_CLICK1_TX   OS_HAL_UART_ISU0//  | OS_HAL_GPIO_26/26 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
+#define MIKROBUS_CLICK1_SCL  HAL_PIN_NC      //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK1_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 // Click socket #2 defines
+// Header #1
+#define MIKROBUS_CLICK2_AN   HAL_PIN_NC      //  | OS_HAL_GPIO_43/43 |                          |                        |
+#define MIKROBUS_CLICK2_RST  HAL_PIN_NC      //  | OS_HAL_GPIO_35/35 |                          |                        |
+#define MIKROBUS_CLICK2_CS   OS_HAL_GPIO_32  //  | OS_HAL_GPIO_32/32 |                          |                        |
+#define MIKROBUS_CLICK2_SCK  HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 |                          |                        |
+#define MIKROBUS_CLICK2_MISO HAL_PIN_NC      //  | OS_HAL_GPIO_33/33 |                          |                        |
+#define MIKROBUS_CLICK2_MOSI HAL_PIN_NC      //  | OS_HAL_GPIO_32/32 |                          |                        |
 
-// The PWR Monitor Click is not supported in a Rev2 board in click socket #2
-
-#define MIKROBUS_CLICK2_AN HAL_PIN_NC
-#define MIKROBUS_CLICK2_CS HAL_PIN_NC
-#define MIKROBUS_CLICK2_MISO HAL_PIN_NC
-#define MIKROBUS_CLICK2_MOSI HAL_PIN_NC
-
-#define MIKROBUS_CLICK2_PWM HAL_PIN_NC
-#define MIKROBUS_CLICK2_INT HAL_PIN_NC
-#define MIKROBUS_CLICK2_RX HAL_PIN_NC
-#define MIKROBUS_CLICK2_TX HAL_PIN_NC
-#define MIKROBUS_CLICK2_SCL HAL_PIN_NC
-#define MIKROBUS_CLICK2_SDA HAL_PIN_NC
-
+// Header #2
+#define MIKROBUS_CLICK2_PWM  HAL_PIN_NC      //  | OS_HAL_GPIO_1/1   |                          |                        |
+#define MIKROBUS_CLICK2_INT  HAL_PIN_NC      //  | OS_HAL_GPIO_34/34 |                          |                        |
+#define MIKROBUS_CLICK2_RX   OS_HAL_UART_ISU1//  | OS_HAL_GPIO_33/33 | OS_HAL_UART_ISU1/ "ISU1" |                        |    
+#define MIKROBUS_CLICK2_TX   OS_HAL_UART_ISU1//  | OS_HAL_GPIO_31/31 | OS_HAL_UART_ISU1/ "ISU1" |                        |
+#define MIKROBUS_CLICK2_SCL  HAL_PIN_NC      //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK2_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 #else // Invalid 
-#error "Invalid board definition"
+#error "Invalid board definition, 2 Starter Kit Revs defined in build_options.h"
 #endif // REV1_BOARD
