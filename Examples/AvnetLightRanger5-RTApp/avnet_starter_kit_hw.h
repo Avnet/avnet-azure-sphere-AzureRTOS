@@ -25,7 +25,7 @@
 #define MIKROBUS_CLICK1_RX   HAL_PIN_NC      //  | OS_HAL_GPIO_28/28 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
 #define MIKROBUS_CLICK1_TX   HAL_PIN_NC      //  | OS_HAL_GPIO_26/26 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
 #define MIKROBUS_CLICK1_SCL  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
-#define MIKROBUS_CLICK1_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK1_SDA  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 // Click socket #2 defines
 // Header #1
@@ -42,7 +42,7 @@
 #define MIKROBUS_CLICK2_RX   HAL_PIN_NC      //  | OS_HAL_GPIO_28/28 | OS_HAL_UART_ISU1/ "ISU1" |                        |    
 #define MIKROBUS_CLICK2_TX   HAL_PIN_NC      //  | OS_HAL_GPIO_26/26 | OS_HAL_UART_ISU1/ "ISU1" |                        |
 #define MIKROBUS_CLICK2_SCL  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
-#define MIKROBUS_CLICK2_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK2_SDA  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 #elif defined(REV2_BOARD)
 
@@ -61,7 +61,7 @@
 #define MIKROBUS_CLICK1_RX   HAL_PIN_NC      //  | OS_HAL_GPIO_28/28 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
 #define MIKROBUS_CLICK1_TX   HAL_PIN_NC      //  | OS_HAL_GPIO_26/26 | OS_HAL_UART_ISU0/ "ISU0" |                        |   
 #define MIKROBUS_CLICK1_SCL  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
-#define MIKROBUS_CLICK1_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK1_SDA  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 // Click socket #2 defines
 // Header #1
@@ -78,7 +78,7 @@
 #define MIKROBUS_CLICK2_RX   HAL_PIN_NC      //  | OS_HAL_GPIO_33/33 | OS_HAL_UART_ISU1/ "ISU1" |                        |    
 #define MIKROBUS_CLICK2_TX   HAL_PIN_NC      //  | OS_HAL_GPIO_31/31 | OS_HAL_UART_ISU1/ "ISU1" |                        |
 #define MIKROBUS_CLICK2_SCL  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_37/37 |                          | OS_HAL_I2C_ISU2/"ISU2" |
-#define MIKROBUS_CLICK2_SDA  HAL_PIN_NC      //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
+#define MIKROBUS_CLICK2_SDA  OS_HAL_I2C_ISU2 //  | OS_HAL_GPIO_38/38 |                          | OS_HAL_I2C_ISU2/"ISU2" |
 
 #else // Invalid 
 #error "Invalid board definition, 2 Starter Kit Revs defined in build_options.h"
