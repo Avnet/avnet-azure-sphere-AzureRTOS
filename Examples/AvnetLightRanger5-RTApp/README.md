@@ -134,6 +134,10 @@ static void receive_msg_handler(void *data_block, ssize_t message_length)
     dx_intercorePublish(&intercore_lightranger5_click_binding, &ic_tx_block_sample,
                             sizeof(IC_COMMAND_BLOCK_LIGHTRANGER5_CLICK_HL_TO_RT));     
 ```
+* Update the high level application app_manifest.json file with the componentId that the real-time application uses for the intercore communication connection.
+ ```JSON
+   "ComponentId": "b8f5931e-173a-40f5-a4f8-3d98240f53ec",
+ ```
 * Update the high level application app_manifest.json file with the real time application's ComponentID
  ```JSON
  "AllowedApplicationConnections": [ "f6768b9a-e086-4f5a-8219-5ffe9684b001" ]
