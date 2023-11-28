@@ -151,13 +151,15 @@ void application_task ( void )
     response_byte = pwrmeter_read_reg_signed( &pwrmeter, PWRMETER_PWR_FACTOR_REG, PWRMETER_16BIT_DATA, &power_factor );
     check_response( );
     
-    meas_data[ 0 ] = ( float ) voltage_rms / 100;
-    meas_data[ 1 ] = ( float ) current_rms / 1000;
-    meas_data[ 2 ] = ( float ) active_power / 100000;
-    meas_data[ 3 ] = ( float ) reactive_power / 100000;
-    meas_data[ 4 ] = ( float ) apparent_power / 100000;
-    meas_data[ 5 ] = ( float ) power_factor / 32767;
-    
+    //meas_data[ VOLTAGE_RMS ] = ( float ) voltage_rms / 100;  // Use for the click board
+    meas_data[ VOLTAGE_RMS ] = ( float ) voltage_rms / 10;    // Use for the Microchip demo fixture
+    //meas_data[ CURRENT_RMS ] = ( float ) current_rms / 1000; // Use for the click board
+    meas_data[ CURRENT_RMS ] = ( float ) current_rms / 10000;   // Use for the Microchip demo fixture
+    meas_data[ ACTIVE_POWER ] = ( float ) active_power / 100000;
+    meas_data[ REACTIVE_POWER ] = ( float ) reactive_power / 100000;
+    meas_data[ APPARENT_POWER ] = ( float ) apparent_power / 100000;
+    meas_data[ POWER_FACTOR ] = ( float ) power_factor / 32767;
+
     response_byte = pwrmeter_get_status( &pwrmeter, &status_byte );
     check_response( );
     
