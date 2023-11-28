@@ -72,33 +72,42 @@ Reads temperature data from a [MikroE Thermo CLICK board](https://www.mikroe.com
 Reads distance range data from a [MikroE Lightranger5 CLICK board](https://www.mikroe.com/lightranger-5-click) using an AMS TMF8801 Time of Flight Sensor
 ## AvnetPHTClickRTApp (4/11/22)
 Reads distance range data from a [MikroE PHT CLICK board](https://www.mikroe.com/pht-click) using a TE Connectivity MS8607 pressure, humidity and temperature sensor
-
+## AvnetPWRmeterClickRTApp (11/28/23)
+Reads voltage and current from a [MikroE PWR meter CLICK board](https://www.mikroe.com/pwr-meter-click)
+- Note there are application manifest conflicts that don't allow a REV2 Click2 build
+## AvnetPWRmeterClickRTApp (Variant 2)(11/28/23)
+Reads Power data from a [MicroChip MCPF511A Power Monitor Demonstration Board](https://www.microchip.com/en-us/development-tool/adm00667#utm_medium=Press-Release&utm_term=MCP39F511_PR_4-21-15&utm_content=AIPD&utm_campaign=Board)
+- define MICROCHIP_DEMONSTRATION_BOARD in buildOptioins.h
 # Hardware Dependencies
 The table below identifies each example and the hardware resources it uses.  Two different appliations can not share the same hardware resource.  Use this table to determine which applications can co-exist on the same deployment.
 
 For example, I could create a deployment for a Rev1 Starter Kit that had a Grove GPS device connected to CLICK socket #1 (ISU0) and a Thermo CLICK board installed in CLICK socket #2 (ISU1).  But I could not have a deployment reading the on-board LPS22HH sensor (ISU2) and a HTU21D Temp-Hum13 CLICK board (ISU2) since they both need to claim and use ISU2.
 
 | Example Name                   | ISU0 | ISU1 | ISU2 | ISU3 | ISU4 | ADC 0 | PWM 0 | PWM 1 | PWM 2 | 
-|--------------------------------|------|------|------|------|------|-------|-------|-------|-------|
-| ASL-PT19 REV1                  |      |      |      |      |      |   X   |       |       |       |
-| ASL-PT19 REV2                  |      |      |      |      |      |   X   |       |       |       |
-| Generic App                    |      |      |      |      |      |       |       |       |       |
-| Grove GPS REV1                 |  X   |      |      |      |      |       |       |       |       |
-| Grove GPS REV2 Click1          |  X   |      |      |      |      |       |       |       |       |
-| Grove GPS REV2 Click2          |      |   X  |      |      |      |       |       |       |       |
-| LPS22HH REV1                   |      |      |   X  |      |      |       |       |       |       |
-| LPS22HH REV2                   |      |      |   X  |      |      |       |       |       |       |
-| LSM6DSO REV1                   |      |      |   X  |      |      |       |       |       |       |
-| LSM6DSO REV2                   |      |      |   X  |      |      |       |       |       |       |
-| HTU21D REV1                    |      |      |   X  |      |      |       |       |       |       |
-| HTU21D REV2                    |      |      |   X  |      |      |       |       |       |       |
-| Thermo CLICK REV1              |      |   X  |      |      |      |       |       |       |       |
-| Thermo CLICK REV2**            |   X  |      |      |      |      |       |       |       |       |
-| Lightranger5 CLICK Rev1        |      |   X  |  X   |      |      |       |       |       |       | 
-| Lightranger5 CLICK Rev2 Click1 |      |   X  |  X   |      |      |       |       |       |       | 
-| Lightranger5 CLICK Rev2 Click2 |  X   |      |  X   |      |      |       |       |       |       | 
-| PHT Click REV1                 |      |      |   X  |      |      |       |       |       |       |
-| PHT Click REV2                 |      |      |   X  |      |      |       |       |       |       |
+|---------------------------------|------|------|------|------|------|-------|-------|-------|-------|
+| ASL-PT19 REV1                   |      |      |      |      |      |   X   |       |       |       |
+| ASL-PT19 REV2                   |      |      |      |      |      |   X   |       |       |       |
+| Generic App                     |      |      |      |      |      |       |       |       |       |
+| Grove GPS REV1                  |  X   |      |      |      |      |       |       |       |       |
+| Grove GPS REV2 Click1           |  X   |      |      |      |      |       |       |       |       |
+| Grove GPS REV2 Click2           |      |   X  |      |      |      |       |       |       |       |
+| LPS22HH REV1                    |      |      |   X  |      |      |       |       |       |       |
+| LPS22HH REV2                    |      |      |   X  |      |      |       |       |       |       |
+| LSM6DSO REV1                    |      |      |   X  |      |      |       |       |       |       |
+| LSM6DSO REV2                    |      |      |   X  |      |      |       |       |       |       |
+| HTU21D REV1                     |      |      |   X  |      |      |       |       |       |       |
+| HTU21D REV2                     |      |      |   X  |      |      |       |       |       |       |
+| Thermo CLICK REV1               |      |   X  |      |      |      |       |       |       |       |
+| Thermo CLICK REV2**             |   X  |      |      |      |      |       |       |       |       |
+| Lightranger5 CLICK Rev1         |      |   X  |  X   |      |      |       |       |       |       | 
+| Lightranger5 CLICK Rev2 Click1  |      |   X  |  X   |      |      |       |       |       |       | 
+| Lightranger5 CLICK Rev2 Click2  |  X   |      |  X   |      |      |       |       |       |       | 
+| PHT Click REV1                  |      |      |   X  |      |      |       |       |       |       |
+| PHT Click REV2                  |      |      |   X  |      |      |       |       |       |       |
+| PWR meter Click REV1            |  X   |      |      |      |      |       |       |       |       |
+| PWR meter Click REV2 Click1     |  X   |      |      |      |      |       |       |       |       |
+| MCPF511A Demo Board ISU0        |  X   |      |      |      |      |       |       |       |       |
+| MCPF511A Demo Board ISU1        |      |   X  |      |      |      |       |       |       |       |
 
 ** The Avnet Starter Kit REV2 board only supports the Thermo Click in click socket #1 
 
