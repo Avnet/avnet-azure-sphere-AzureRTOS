@@ -42,7 +42,7 @@
 #include "os_hal_uart.h"
 #include "os_hal_mbox.h"
 #include "os_hal_mbox_shared_mem.h"
-#include "generic_rt_app.h"
+#include "pwr_meter_rt_app.h"
 #include "avnet_starter_kit_hw.h"
 #include "pwrmeter.h"
 
@@ -640,9 +640,16 @@ void readPwrMonitorData(void){
         check_response( );
         response_byte = pwrmeter_read_reg_signed( &pwrmeter, PWRMETER_PWR_FACTOR_REG, PWRMETER_16BIT_DATA, &power_factor );
         check_response( );
-        
-        meas_data[ VOLTAGE_RMS ] = ( float ) voltage_rms / 100;
-        meas_data[ CURRENT_RMS ] = ( float ) current_rms / 1000;
+
+#define MICROCHIP_DEMONSTRATION_BOARD
+
+#ifdef MICROCHIP_DEMONSTRATION_BOARD
+        meas_data[ VOLTAGE_RMS ] = ( float ) voltage_rms / 10;    // Use for the Microchip demo fixture
+        meas_data[ CURRENT_RMS ] = ( float ) current_rms / 10000;
+#else
+        meas_data[ VOLTAGE_RMS ] = ( float ) voltage_rms / 100;  // Use for the click board
+        meas_data[ CURRENT_RMS ] = ( float ) current_rms / 1000; // Use for the click board
+#endif        
         meas_data[ ACTIVE_POWER ] = ( float ) active_power / 100000;
         meas_data[ REACTIVE_POWER ] = ( float ) reactive_power / 100000;
         meas_data[ APPARENT_POWER ] = ( float ) apparent_power / 100000;
