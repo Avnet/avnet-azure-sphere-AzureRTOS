@@ -78,6 +78,7 @@ Reads voltage and current from a [MikroE PWR meter CLICK board](https://www.mikr
 ## AvnetPWRmeterClickRTApp (Variant 2)(11/28/23)
 Reads Power data from a [MicroChip MCPF511A Power Monitor Demonstration Board](https://www.microchip.com/en-us/development-tool/adm00667#utm_medium=Press-Release&utm_term=MCP39F511_PR_4-21-15&utm_content=AIPD&utm_campaign=Board)
 - define MICROCHIP_DEMONSTRATION_BOARD in buildOptioins.h
+- See [this project](https://github.com/Avnet/AzureSphereDevX.Examples/tree/master/avnet_nespresso_demo) for details on connecting the Avnet Starter Kit to the demonstration board
 # Hardware Dependencies
 The table below identifies each example and the hardware resources it uses.  Two different appliations can not share the same hardware resource.  Use this table to determine which applications can co-exist on the same deployment.
 
