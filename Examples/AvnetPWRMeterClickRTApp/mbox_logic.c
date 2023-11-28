@@ -641,8 +641,6 @@ void readPwrMonitorData(void){
         response_byte = pwrmeter_read_reg_signed( &pwrmeter, PWRMETER_PWR_FACTOR_REG, PWRMETER_16BIT_DATA, &power_factor );
         check_response( );
 
-#define MICROCHIP_DEMONSTRATION_BOARD
-
 #ifdef MICROCHIP_DEMONSTRATION_BOARD
         meas_data[ VOLTAGE_RMS ] = ( float ) voltage_rms / 10;    // Use for the Microchip demo fixture
         meas_data[ CURRENT_RMS ] = ( float ) current_rms / 10000;
