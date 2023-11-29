@@ -14,7 +14,7 @@ The Avnet PWR meter AzureRTOS real time application reads UART data from a PWR m
 * IC_PWR_METER_SET_AUTO_TELEMETRY_RATE
   * The application will read the sample rate and if non-zero, will automatically send sensor telemetry at the period specified by the command.  If set to zero, no automatic telemetry messages will be sent. 
 
-# Sideloading the appliction binary
+# Sideloading the applictation binary
 
 This application binary can be side loaded onto your device with the following commands . . .
 
